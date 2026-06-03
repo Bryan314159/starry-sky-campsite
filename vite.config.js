@@ -5,4 +5,7 @@ import manifest from './manifest.json';
 
 export default defineConfig({
   plugins: [react(), crx({ manifest })],
+  build: {
+    chunkSizeWarningLimit: 1200,
+  },
 });
