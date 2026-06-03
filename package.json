@@ -1,0 +1,24 @@
+{
+  "name": "starry-sky-campsite",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "将浏览器书签变成从营地走向星空的沉浸式旅程",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@react-three/drei": "^10.7.7",
+    "@react-three/fiber": "^9.6.1",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
+    "three": "^0.184.0"
+  },
+  "devDependencies": {
+    "@crxjs/vite-plugin": "^2.4.0",
+    "@vitejs/plugin-react": "^6.0.2",
+    "vite": "^8.0.16"
+  }
+}
