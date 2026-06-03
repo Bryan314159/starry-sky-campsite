@@ -1,6 +1,53 @@
 # 收藏夹可视化 — 设计文档
 
-## 一、架构总览
+## 一、开发方法论
+
+### 1.1 SDD（Specification-Driven Development）
+
+本项目采用规格驱动的开发方式：
+
+```
+spec.md 编写  →  评审确认  →  按规格实现  →  测试验证  →  交付
+    ↑                                                      │
+    └──────────── 发现偏差，回溯更新规格 ←──────────────────┘
+```
+
+- **spec.md** 是项目的唯一真相源（single source of truth）。所有功能"长什么样"、"怎么交互"、"边界情况如何处理"都在 spec.md 中定义。
+- **design.md**（本文档）描述"怎么实现"——架构、流程、Agent 协作方式、技术决策。
+- 任何代码变更前，先确认 spec.md 中对应的 GWT 场景是否存在。不存在则先写规格。
+- 测试用例直接对应 spec.md 中的 GWT 场景，一一映射、可追溯。
+
+### 1.2 BDD + GWT（Given-When-Then）
+
+所有功能场景采用 GWT 格式描述，写入 spec.md：
+
+```
+Given  前置状态（当前场景、数据状态）
+When   用户操作（点击、hover、输入）
+Then   预期结果（画面变化、状态切换、URL 跳转）
+```
+
+**示例——场景切换：**
+
+```
+Scenario: 用户从营地进入星空
+  Given 用户在场景一（营地）
+  And 路牌上显示"开发工具"指示牌
+  When 用户点击"开发工具"指示牌
+  Then 画面切换至场景二（星空）
+  And 夜空中显示"开发工具"文件夹内的所有书签星星
+```
+
+GWT 格式的优势：
+- 非技术人员也能阅读和确认
+- 可以直接翻译为自动化测试用例
+- 规格和测试之间没有"翻译损耗"
+
+---
+
+## 二、架构总览
+
+### 2.1 系统分层
 
 ```
 ┌──────────────────────────────────────────────────┐
@@ -24,482 +71,363 @@
 └──────────────────────────────────────────────────┘
 ```
 
-- **产品形态**：Chrome 扩展 Manifest V3，替代新标签页
-- **类型**：纯前端项目，无后端、无服务器、无数据库
-- **数据来源**：浏览器本地书签（Chrome Bookmarks API）
-- **搜索**：调用 Chrome Search API 触发默认搜索引擎
+两层渲染：
+- **3D Canvas 层**（R3F）—— 场景中的所有立体元素（路牌、星星、天空球、地面、小猫）
+- **HTML Overlay 层** —— 叠在 Canvas 之上的 DOM 元素（搜索框、Tooltip）
 
----
+### 2.2 技术栈
 
-## 二、技术栈
+| 层面 | 选择 | 理由 |
+|------|------|------|
+| 框架 | React 19.x | 组件化状态管理，R3F 的 React 封装 |
+| 3D 渲染 | Three.js + @react-three/fiber | 真 3D 空间，真实透视和光照 |
+| 3D 工具集 | @react-three/drei | 天空球、文字、射线检测等便捷封装 |
+| 构建 | Vite 6.x + @crxjs/vite-plugin | 构建快，一键打包 Chrome 扩展 |
+| 扩展标准 | Manifest V3 | Chrome 当前强制标准 |
+| 语言 | JavaScript (JSX) | 无类型约束，快速开发 |
+| 状态管理 | React Context + useReducer | 状态简单，无需引入外部库 |
+| 后期效果 | @react-three/postprocessing | 后续阶段加轮廓线、色彩分级 |
 
-| 层面 | 选择 | 版本 | 理由 |
-|------|------|------|------|
-| 框架 | React | 19.x | 组件化状态管理，R3F 依赖 |
-| 3D 渲染 | Three.js + React Three Fiber | three@latest, @react-three/fiber | 真 3D 空间表现透视和星空，R3F 做声明式封装 |
-| 构建 | Vite | 6.x | 构建快，`@crxjs/vite-plugin` 一键打包扩展 |
-| 扩展标准 | Manifest V3 | — | Chrome 当前强制标准 |
-| 语言 | JavaScript (JSX) | ES2022+ | 无类型约束，快速开发 |
-
-### 额外依赖
-
-| 包 | 用途 |
-|------|------|
-| `@react-three/drei` | R3F 工具集（天空球、文字、射线检测等便捷封装） |
-| `@react-three/postprocessing` | 后续阶段加轮廓线、色彩分级等后期效果 |
-| 无状态管理库 | React Context + useReducer 足够 |
-
----
-
-## 三、项目文件结构
-
-```
-starry-sky-campsite/
-├── manifest.json                # Chrome 扩展清单
-├── newtab.html                  # 新标签页入口 HTML
-├── vite.config.js               # Vite + crxjs 配置
-├── package.json
-│
-├── public/
-│   └── textures/                # 手绘纹理静态资源
-│       ├── grass.png            #   草地
-│       ├── wood.png             #   木头
-│       ├── sky-day.png          #   场景一白天天空
-│       ├── sky-night.png        #   场景二夜空
-│       ├── signboard-blank.png  #   路牌空白板
-│       └── star.png             #   星星精灵
-│
-└── src/
-    ├── main.jsx                 # React 入口，挂载 <App/>
-    │
-    ├── App.jsx                  # 顶层：Context Provider + R3F Canvas + HTML Overlay
-    │
-    ├── context/
-    │   └── AppContext.jsx       # 场景状态、选中文件夹、书签数据
-    │
-    ├── hooks/
-    │   ├── useBookmarks.js      # 封装 chrome.bookmarks API 调用
-    │   └── useRaycast.js        # 射线检测点击/悬停逻辑
-    │
-    ├── scenes/
-    │   ├── Campsite.jsx         # 场景一：营地路牌（组合组件）
-    │   │
-    │   └── StarrySky.jsx        # 场景二：星空书签（组合组件）
-    │
-    ├── components/
-    │   ├── Ground.jsx           # 草地地面（两场景复用）
-    │   ├── Path.jsx             # 小路（两场景复用）
-    │   ├── SkyDome.jsx          # 天空球（参数化：白天/夜晚）
-    │   ├── Signpost.jsx         # 路牌柱 + 动态生成指示牌
-    │   ├── SignBoard.jsx        # 单块指示牌（3D 板 + CanvasTexture 文字）
-    │   ├── StarField.jsx        # 星空系统（管理多颗星星）
-    │   ├── Star.jsx             # 单颗星星
-    │   └── Cat.jsx              # 小猫（占位，等设计稿）
-    │
-    ├── overlays/
-    │   ├── SearchBar.jsx        # 搜索框（HTML 叠加层）
-    │   └── Tooltip.jsx          # 星星 hover 提示（HTML 叠加层）
-    │
-    └── utils/
-        └── bookmarks.js         # 书签树解析函数
-```
-
----
-
-## 四、组件树
+### 2.3 组件树
 
 ```
 <App>
-├── <AppProvider>                    ← Context: scene, selectedFolder, bookmarks
+├── <AppProvider>                 ← Context: scene, folders, selectedFolder, bookmarks
 │   │
-│   ├── <Canvas>                     ← R3F 3D 画布
-│   │   ├── {scene === 'campsite' &&
-│   │   │   <Campsite>
-│   │   │     <SkyDome variant="day" />
-│   │   │     <Ground />
-│   │   │     <Path />
-│   │   │     <Signpost>
-│   │   │       {folders.map(f =>
-│   │   │         <SignBoard key={f.id} folderName={f.name} />
-│   │   │       )}
-│   │   │     </Signpost>
-│   │   │   </Campsite>
-│   │   │ }
+│   ├── <Canvas>                  ← R3F 3D 画布
+│   │   ├── {scene === 'campsite' && <Campsite>}
+│   │   │     SkyDome(day) / Ground / Path / Signpost → SignBoard[]
 │   │   │
-│   │   │ {scene === 'starry' &&
-│   │   │   <StarrySky>
-│   │   │     <SkyDome variant="night" />
-│   │   │     <StarField>
-│   │   │       {selectedFolder.children.map(b =>
-│   │   │         <Star key={b.id} title={b.title} url={b.url} />
-│   │   │       )}
-│   │   │     </StarField>
-│   │   │     <Ground />
-│   │   │     <Path returnTrigger />
-│   │   │     <Cat />
-│   │   │   </StarrySky>
-│   │   │ }
-│   │   └──
+│   │   └── {scene === 'starry'  && <StarrySky>}
+│   │         SkyDome(night) / StarField → Star[] / Ground / Path / Cat
 │   │
-│   ├── <SearchBar />               ← HTML 叠加层，始终显示
-│   └── <Tooltip />                  ← HTML 叠加层，hover 星星时显示
+│   ├── <SearchBar />             ← HTML 叠加层，始终可见
+│   └── <Tooltip />               ← HTML 叠加层，hover 星星时显示
 ```
 
----
-
-## 五、数据层设计
-
-### 5.1 书签读取流程
+### 2.4 数据流
 
 ```
 chrome.bookmarks.getTree()
         │
         ▼
-utils/bookmarks.js  parseBookmarkTree()
-        │
-        │  1. 定位 "书签栏" 节点 (parentId === '1' 的 toolbar 子节点)
-        │  2. 遍历其直接子节点
-        │  3. 仅保留类型为 folder 且有 children 的节点
-        │  4. 忽略"其他书签"节点
-        │  5. 忽略嵌套子文件夹内的深层书签
-        │  6. 忽略空文件夹
+parseBookmarkTree(rawTree)        ← utils/bookmarks.js
         │
         ▼
-[
-  {
-    id: "123",
-    name: "开发工具",
-    children: [
-      { id: "456", title: "GitHub", url: "https://github.com" },
-      { id: "789", title: "Stack Overflow", url: "https://stackoverflow.com" },
-      ...
-    ]
-  },
-  { ... },
-  ...
-]
+AppContext ── folders[] ──────────▶ Campsite 渲染指示牌
+        │
+        │  用户点击指示牌 → setSelectedFolder(folder)
+        ▼
+AppContext ── selectedFolder ────▶ StarrySky 渲染星星
+        │
+        │  用户点击星星 → window.location.href = url
+        │  用户点击小路 → setScene('campsite')
 ```
 
-### 5.2 AppContext 状态
-
-```js
-{
-  scene: 'campsite' | 'starry',      // 当前场景
-  folders: [],                        // 解析后的一级文件夹数组
-  selectedFolder: null,              // 当前选中的文件夹（含 children）
-  bookmarksLoaded: false,             // 书签是否已加载
-  hasBookmarks: true,                 // 是否有有效书签
-}
-```
-
-### 5.3 数据流转
+### 2.5 项目文件结构
 
 ```
-useBookmarks()                     ← 调用 chrome.bookmarks.getTree()
-    │
-    ▼
-parseBookmarkTree(rawTree)         ← utils/bookmarks.js
-    │
-    ▼
-AppContext ── folders[] ──────────▶ Scene 1 渲染路牌
-    │
-    │  用户点击路牌
-    ▼
-AppContext ── selectedFolder ─────▶ Scene 2 渲染星星
-    │
-    │  用户点击星星
-    ▼
-window.location.href = star.url   ← 在当前标签页打开网址
-```
-
----
-
-## 六、场景实现设计
-
-### 6.1 场景一：营地·路牌
-
-#### 摄像机
-
-```js
-camera.position.set(3, 1.6, 4.5)   // 右前方，略高于地面
-camera.lookAt(0, 1.3, -1)           // 注视路牌柱中心
-// FOV: 60°, near: 0.1, far: 50
-```
-
-#### 元素几何体与材质
-
-| 元素 | 几何体 | 材质 | 纹理 |
-|------|--------|------|------|
-| 地面 | `PlaneGeometry(12, 20)` 平铺于 XZ | `MeshToonMaterial` | `grass.png` |
-| 小路 | `PlaneGeometry(1.5, 15)` 沿 Z 轴从近到远 | `MeshToonMaterial` | 泥土/小径纹理 |
-| 天空 | `SphereGeometry(20, 32, 32)` 包裹全场 | `MeshBasicMaterial` (无光照) | `sky-day.png` |
-| 路牌柱 | `CylinderGeometry(0.12, 0.15, 3.5)` | `MeshToonMaterial` | `wood.png` |
-| 指示牌 | `BoxGeometry(0.8, 0.22, 0.04)` | `MeshToonMaterial` | `signboard-blank.png` + CanvasTexture 文字 |
-
-#### 路牌布局
-
-```
-路牌柱坐标: (0, 1.75, 0)   ← 柱中心（柱高 3.5，底部在 y=0）
-
-指示牌在柱上的排列（共 N 块，N = folders.length）：
-  每块牌:
-    position.y  = 0.6 + i * 0.45     ← 从低到高均匀分布
-    rotation.y  = -0.6 + i * 0.25    ← 每块指向稍有不同
-    position.x  = 0（附着在柱上）
-
-文字通过 CanvasTexture 动态绘制：
-  1. 创建离屏 Canvas
-  2. 绘制手绘风格底色
-  3. 绘制文件夹名称文字
-  4. 导出为 CanvasTexture
-  5. 赋给指示牌的 MeshToonMaterial.map
-```
-
-#### 光照
-
-```js
-<ambientLight intensity={0.4} />
-<directionalLight position={[5, 8, 3]} intensity={1.2} color="#FFE4B5" />
-<hemisphereLight args={["#87CEEB", "#4B7B3D", 0.3]} />
-```
-
-#### 空状态
-
-无书签时，在路牌柱上生成 2-3 块预置指示牌，显示引导文案：
-- "在这里添加你的第一个书签"
-- "在书签栏创建文件夹来组织链接"
-- "然后回到这里，探索你的星空"
-
-### 6.2 场景二：星空·书签
-
-#### 摄像机
-
-```js
-camera.position.set(0, 0.2, 0)      // 接近地面，小猫视角
-// 相机向上仰视
-camera.rotation.x = -Math.PI * 0.35 // 仰角约 63°
-// FOV: 70°, near: 0.1, far: 50
-```
-
-#### 元素几何体与材质
-
-| 元素 | 几何体 | 材质 | 纹理 |
-|------|--------|------|------|
-| 天空穹顶 | `SphereGeometry(18, 48, 48)` 内表面 | `MeshBasicMaterial`, `side: BackSide` | `sky-night.png` |
-| 星星 | `SphereGeometry(0.06–0.20, 8, 8)` | `MeshStandardMaterial` + emissive | 无纹理，用 emissive 发光 |
-| 地面 | 复用 `Ground`，仅底部可见 | 同场景一 | `grass.png` |
-| 小路 | 复用 `Path`，位于底部 | 同场景一 | — |
-| 小猫 | 待设计稿，先用简单几何体占位 | `MeshToonMaterial` | — |
-
-#### 星星布局
-
-```
-星星分布在天空穹顶的上半部分（仰角 15° 以上区域）：
-
-生成算法（每颗星）：
-  azimuth   = Math.random() * Math.PI * 2          // 水平角 0-360°
-  elevation = Math.random() * Math.PI * 0.4 + 0.3  // 仰角 ~17°-90°
-  radius    = 16 + Math.random() * 2               // 距离球心
-  size      = 0.06 + Math.random() * 0.14          // 随机大小
-
-笛卡尔坐标：
-  x = radius * cos(elevation) * sin(azimuth)
-  y = radius * sin(elevation)
-  z = radius * cos(elevation) * cos(azimuth)
-```
-
-#### 光照
-
-```js
-<ambientLight intensity={0.15} />
-// 星星自身发光，不依赖外部光源
-```
-
-#### 返回触发
-
-小路的可点击区域使用 Three.js Raycaster 检测：
-- 射线命中 `Path` 网格 → 触发场景切换回场景一
-- 当前场景直接用 `scene` 状态切换，无动画
-
-### 6.3 场景切换
-
-MVP 采用**直接切换**（无过渡动画）：
-
-```js
-// 场景一 → 场景二
-onSignBoardClick(folder) {
-  setSelectedFolder(folder);
-  setScene('starry');
-}
-
-// 场景二 → 场景一
-onPathClick() {
-  setScene('campsite');
-}
-```
-
-后续迭代加入相机过渡动画（R3F `useFrame` 或 GSAP）。
-
----
-
-## 七、交互设计
-
-### 7.1 点击检测
-
-使用 Three.js Raycaster：
-
-```
-鼠标点击 → 屏幕坐标 → Raycaster.setFromCamera()
-  → scene.children 射线相交检测
-  → 命中 SignBoard → 场景切换
-  → 命中 Star     → 打开 URL
-  → 命中 Path      → 返回场景一
-```
-
-R3F 中通过 `<mesh onClick={...} />` 声明式绑定。
-
-### 7.2 Hover 效果
-
-```
-onPointerOver(star) →
-  1. star.scale = 1.3x
-  2. star.emissiveIntensity 提升
-  3. 显示 HTML Tooltip（网站名）
-
-onPointerOut(star) →
-  1. star.scale 还原
-  2. star.emissiveIntensity 还原
-  3. 隐藏 Tooltip
-```
-
-Tooltip 定位：获取屏幕坐标 → 在星星位置上方偏移显示 HTML 元素。
-
-### 7.3 搜索框
-
-```
-┌──────────────────────────────────────┐
-│                                      │
-│         [ 场景画面区域 ]              │
-│                                      │
-│         ┌──────────────────┐         │
-│         │ 🔍 搜索...      │ ← 底部居中，半透明，圆角
-│         └──────────────────┘         │
-│                                      │
-└──────────────────────────────────────┘
-```
-
-- HTML `<input>` 通过绝对定位叠在 Canvas 上
-- 样式：半透明背景、手绘风边框、融入画面底部
-- 回车 → `chrome.search.query({ text: inputValue })` 触发默认搜索
-- 始终可见，不随场景切换隐藏
-
----
-
-## 八、资产规格
-
-### 8.1 纹理清单
-
-| 纹理 | 尺寸 | 格式 | 说明 |
-|------|------|------|------|
-| grass.png | 512×512 | PNG | 手绘草地质感，可平铺 |
-| wood.png | 256×512 | PNG | 手绘木质纹理 |
-| sky-day.png | 2048×1024 | PNG | 暖色调傍晚天空，EQUIRECTANGULAR |
-| sky-night.png | 2048×1024 | PNG | 深蓝紫渐变的夜空，EQUIRECTANGULAR |
-| signboard-blank.png | 512×128 | PNG | 手绘木质路牌底板 |
-| star.png | 64×64 | PNG | 手绘星星/光点精灵（可选） |
-
-### 8.2 字体
-
-- 指示牌文字：使用 Canvas 2D API 绘制，字体选择清晰可读的无衬线体
-- 搜索框：继承浏览器默认字体
-
-### 8.3 小猫
-
-- 待设计图
-- MVP 阶段可用简单几何体（Sphere + Box）组合占位
-- 场景二中面向观众（正面），位于画面底部中央
-
----
-
-## 九、Chrome 扩展配置
-
-### manifest.json
-
-```json
-{
-  "manifest_version": 3,
-  "name": "收藏夹可视化 - 星空营地",
-  "version": "0.1.0",
-  "description": "将书签变成从营地走向星空的沉浸式旅程",
-  "chrome_url_overrides": {
-    "newtab": "newtab.html"
-  },
-  "permissions": ["bookmarks", "search"],
-  "host_permissions": [],
-  "icons": {
-    "16": "icons/icon16.png",
-    "48": "icons/icon48.png",
-    "128": "icons/icon128.png"
-  }
-}
+starry-sky-campsite/
+├── manifest.json
+├── newtab.html
+├── vite.config.js
+├── package.json
+│
+├── doc/                          # 项目文档
+│   ├── demand.md                 #   需求文档
+│   ├── design.md                 #   设计文档（本文件）
+│   ├── spec.md                   #   规格文档（GWT 场景）
+│   ├── art-style.md              #   画风参考文档
+│   └── discussions/              #   讨论记录
+│
+├── agents/                       # Agent 设计文档
+│   ├── main-agent.md
+│   ├── scene-agent.md
+│   ├── data-agent.md
+│   ├── ui-agent.md
+│   └── test-agent.md
+│
+├── public/textures/              # 手绘纹理静态资源
+│   ├── grass.png
+│   ├── wood.png
+│   ├── sky-day.png
+│   ├── sky-night.png
+│   ├── signboard-blank.png
+│   └── star.png
+│
+└── src/
+    ├── main.jsx                  # 入口
+    ├── App.jsx                   # 顶层组装
+    ├── context/AppContext.jsx    # 全局状态
+    ├── hooks/useBookmarks.js     # 书签读取
+    ├── scenes/
+    │   ├── Campsite.jsx
+    │   └── StarrySky.jsx
+    ├── components/
+    │   ├── Ground.jsx
+    │   ├── Path.jsx
+    │   ├── SkyDome.jsx
+    │   ├── Signpost.jsx
+    │   ├── SignBoard.jsx
+    │   ├── StarField.jsx
+    │   ├── Star.jsx
+    │   └── Cat.jsx
+    ├── overlays/
+    │   ├── SearchBar.jsx
+    │   └── Tooltip.jsx
+    └── utils/bookmarks.js
 ```
 
 ---
 
-## 十、开发里程碑
+## 三、Agent 协作模型
 
-### Phase 1：项目骨架
+项目采用 1 主控 + 4 职能 Agent 的协作架构。各 Agent 的详细设计见 `agents/` 目录。
+
+### 3.1 架构图
+
+```
+                    ┌─────────────┐
+                    │  main-agent │ (总控)
+                    │  任务分解   │
+                    │  Agent 调度 │
+                    │  代码审查   │
+                    │  集成决策   │
+                    │  质量把关   │
+                    └──┬──┬──┬──┘
+                       │  │  │
+          ┌────────────┘  │  │  └────────────┐
+          ▼               ▼  ▼               ▼
+┌──────────────┐ ┌──────────────┐ ┌──────────────┐ ┌──────────────┐
+│ scene-agent  │ │ data-agent   │ │  ui-agent    │ │ test-agent   │
+│ 3D 场景开发  │ │ 数据层开发   │ │ HTML 叠加层  │ │ 测试         │
+│              │ │              │ │              │ │              │
+│ ·Campsite    │ │ ·书签 API    │ │ ·SearchBar   │ │ ·Vitest 配置 │
+│ ·StarrySky   │ │ ·解析函数    │ │ ·Tooltip     │ │ ·单元测试    │
+│ ·所有3D组件  │ │ ·Context状态  │ │ ·CSS 样式    │ │ ·组件测试    │
+│ ·灯光/相机   │ │ ·Mock 数据   │ │ ·定位逻辑    │ │ ·集成测试    │
+│ ·动画/材质   │ │ ·搜索触发    │ │ ·可访问性    │ │ ·Playwright  │
+│ ·画风执行    │ │              │ │              │ │ ·GWT→测试    │
+└──────────────┘ └──────────────┘ └──────────────┘ └──────────────┘
+```
+
+### 3.2 各 Agent 职能
+
+#### main-agent（总控）
+
+- **任务分解：** 将 spec.md 中的 GWT 场景拆分为可分配给子 Agent 的开发任务
+- **Agent 调度：** 决定任务的执行顺序和并行策略
+- **代码审查：** 审查所有子 Agent 的输出，确保符合 spec 和画风要求
+- **集成决策：** 解决 Agent 间的接口争议，做出最终技术决策
+- **质量把关：** 对照 art-style.md 审查画面效果，不通过则打回
+
+#### scene-agent（3D 场景）
+
+- **负责范围：** `scenes/`、`components/`（3D 组件）、灯光、相机、动画、材质
+- **核心任务：** Campsite、StarrySky、Ground、Path、SkyDome、Signpost、SignBoard、StarField、Star、Cat
+- **关注点：** 画面精美度、动画流畅度、画风一致性（对照 art-style.md）
+- **不负责：** HTML Overlay、数据获取、状态管理
+
+#### data-agent（数据层）
+
+- **负责范围：** `utils/bookmarks.js`、`hooks/useBookmarks.js`、`context/AppContext.jsx`
+- **核心任务：** chrome.bookmarks API 封装、书签树解析、状态管理、Mock 数据、搜索触发
+- **关注点：** 数据正确性、空状态/边界情况、Chrome 扩展环境兼容
+- **不负责：** 任何视觉渲染
+
+#### ui-agent（HTML 叠加层）
+
+- **负责范围：** `overlays/`、HTML/CSS
+- **核心任务：** SearchBar（外观 + 搜索触发）、Tooltip（定位 + 内容展示）
+- **关注点：** 融入场景画面不突兀、响应式、可访问性
+- **不负责：** 3D Canvas 内的任何内容
+
+#### test-agent（测试）
+
+- **负责范围：** 全部测试基础设施和测试用例
+- **核心任务：**
+  - Vitest 配置（单元/组件/集成测试）
+  - Playwright 配置（E2E 测试，含 Chrome 扩展环境）
+  - 将 spec.md 的 GWT 场景翻译为测试用例
+  - 视觉回归测试（Playwright screenshots）
+- **关注点：** 测试覆盖率、GWT 可追溯性、CI 可运行
+
+### 3.3 协作流程
+
+```
+1. spec.md 新增/修改 GWT 场景
+       │
+2. main-agent 评审 GWT，拆分为任务
+       │
+3. main-agent 将任务分派给对应的子 Agent
+       │
+4. 子 Agent 独立开发（各自在自己的域内工作）
+       │
+5. 子 Agent 提交代码
+       │
+6. test-agent 运行测试，对照 GWT 验证
+       │
+7. main-agent 审查代码 + 画面效果
+   ├── 通过 → 合并
+   └── 不通过 → 打回修改
+```
+
+---
+
+## 四、测试策略
+
+### 4.1 测试工具
+
+| 层级 | 工具 | 用途 |
+|------|------|------|
+| 单元测试 | Vitest | 纯函数测试（书签解析、布局算法） |
+| 组件测试 | Vitest + @testing-library/react | React 组件渲染和交互测试 |
+| 集成测试 | Vitest | Hook + Context + 数据流测试 |
+| E2E 测试 | Playwright | 完整扩展环境中的端到端测试 |
+| 视觉回归 | Playwright screenshots | 截图对比，验证画面渲染正确 |
+
+**选择理由：**
+- **Vitest** — 与 Vite 原生集成，零配置，速度快，API 兼容 Jest
+- **@testing-library/react** — React 社区标准，以用户视角测试组件
+- **Playwright** — 支持 `--disable-extensions-except` 加载未打包扩展，`persistentContext` 保持扩展状态，是测试 Chrome 扩展的最佳选择
+
+### 4.2 测试金字塔
+
+```
+         ╱  E2E  ╲         场景切换、书签读取、搜索流程
+        ╱   集成   ╲        Hook + Context 数据流
+       ╱    组件    ╲       SignBoard、Star、SearchBar 交互
+      ╱────── 单元 ──────╲   parseBookmarkTree、坐标计算、种子随机
+```
+
+### 4.3 GWT → 测试用例映射
+
+spec.md 中的每一条 GWT 场景，必须至少对应一条自动化测试：
+
+```
+spec.md:                      test:
+Given 用户在场景一            beforeEach: scene = 'campsite'
+When 点击指示牌               fireEvent.click(signBoard)
+Then 切换至场景二             expect(scene).toBe('starry')
+```
+
+test-agent 负责维护这个映射关系的完整性。
+
+### 4.4 E2E 测试环境
+
+Playwright 配置要点：
+- 使用 `persistentContext` 保持扩展加载状态
+- 启动参数 `--disable-extensions-except=<extension-path>` 加载未打包扩展
+- Mock `chrome.bookmarks` API（通过 `chrome.debugger` 或预置书签 Profile）
+- 覆盖关键用户旅程：打开新标签页 → 看到营地 → 点击路牌 → 看到星空 → 点击星星 → URL 跳转
+
+---
+
+## 五、开发阶段
+
+### 阶段 0：规格确认（当前阶段）
+
+- [ ] **spec.md** 编写完成，所有 GWT 场景覆盖 MVP 功能
+- [ ] 用户确认 spec.md
+- [ ] **agents/** 下各 Agent 设计文档编写完成
+- [ ] 用户确认 Agent 设计方案
+
+### 阶段 1：项目骨架（scene-agent + data-agent + test-agent 并行启动）
 
 - [ ] Vite + React + R3F 项目初始化
 - [ ] `@crxjs/vite-plugin` 扩展打包配置
-- [ ] `manifest.json` 创建
-- [ ] `newtab.html` 入口
-- [ ] Chrome 中加载未打包扩展，确认新标签页正常替换
+- [ ] `manifest.json`、`newtab.html` 创建
+- [ ] Vitest + Playwright 测试基础设施搭建
+- [ ] Chrome 中加载未打包扩展，确认新标签页替换正常
 
-### Phase 2：数据层
+### 阶段 2：数据层 + 场景一（data-agent + scene-agent 并行）
 
-- [ ] `utils/bookmarks.js` 解析函数
-- [ ] `useBookmarks` hook
-- [ ] `AppContext` 状态管理
-- [ ] 空状态 mock 数据（开发时无真书签也可渲染）
-
-### Phase 3：场景一
-
-- [ ] `Ground` + `Path` + `SkyDome(day)` 基础场景
-- [ ] `Signpost` + `SignBoard` + CanvasTexture 文字
+- [ ] 书签解析函数 + Mock 数据
+- [ ] AppContext 状态管理
+- [ ] 营地基础场景（地面 + 小路 + 天空）
+- [ ] 路牌柱 + 指示牌 + 文字
 - [ ] 光照调试
 - [ ] 点击路牌切换场景
 
-### Phase 4：场景二
+### 阶段 3：场景二 + UI 叠加层（scene-agent + ui-agent 并行）
 
-- [ ] `SkyDome(night)` + `StarField` + `Star`
+- [ ] 夜空 + 星空系统 + 星星
+- [ ] 搜索框 HTML 叠加层
+- [ ] Tooltip hover 提示
 - [ ] 点击星星打开 URL
-- [ ] Hover 星星显示 Tooltip
 - [ ] 点击小路返回场景一
 
-### Phase 5：搜索与交互完善
+### 阶段 4：测试 + 打磨（test-agent 主导 + main-agent 审查）
 
-- [ ] `SearchBar` HTML 叠加层 + `chrome.search.query`
-- [ ] 交互细节打磨（cursor pointer、hover 过渡）
-- [ ] 空状态测试
+- [ ] 全部 GWT 场景对应的自动化测试通过
+- [ ] E2E 用户旅程测试通过
+- [ ] 视觉回归截图对比
+- [ ] 画风审查（对照 art-style.md）
+- [ ] 性能优化（首帧 < 500ms）
 
-### Phase 6：视觉打磨
+### 阶段 5：交付
 
-- [ ] 手绘纹理导入替换临时材质
-- [ ] 色调、光照、氛围调优
-- [ ] 小猫占位模型
-- [ ] 加载性能优化（纹理压缩、按需加载）
+- [ ] 打包 Chrome 扩展
+- [ ] 验收测试清单逐项通过
 
 ---
 
-## 十一、注意事项
+## 六、技术决策
 
-1. **新标签页限制**：Chrome 新标签页无法使用 `window.open`，MV3 中某些 API（如 `chrome.tabs`）需要额外权限。打开书签使用 `window.location.href` 直接在当前标签页跳转即可。
+### 6.1 关键决策记录
 
-2. **开发调试**：Chrome 新标签页扩展开发时，每次修改需要手动在 `chrome://extensions` 刷新扩展，或使用 Vite HMR（`@crxjs/vite-plugin` 支持热更新）。
+| 决策 | 选择 | 理由 |
+|------|------|------|
+| 渲染方案 | Three.js + R3F | 真 3D 透视是核心体验（小猫沿路行走需要真实 Z 轴深度），CSS 2D 方案无法满足 |
+| 画风实现 | Toon Shader 模拟 2D 手绘 | 参考罗小黑"无影平涂"风格，`MeshToonMaterial` 天然是 2-3 阶色阶，最接近手绘"平涂"质感 |
+| 状态管理 | React Context | 状态量少（scene + folders + selectedFolder），不需要 Redux/Zustand |
+| 场景切换 MVP | 瞬时切换 | 先保证功能完整、加载快速，过场动画延后 |
+| 搜索实现 | chrome.search.query | 触发浏览器默认搜索引擎，不自己实现搜索 |
+| 书签读取 | 仅一级文件夹 + 直接子书签 | 扁平化，避免嵌套复杂度 |
+| 构建工具 | Vite + @crxjs/vite-plugin | 一键打包扩展，HMR 支持 |
+| 无路由库 | state 驱动场景切换 | 只有两个场景，用 `scene` 状态切换比引入 React Router 更简单 |
 
-3. **性能目标**：新标签页打开速度是关键。首帧渲染目标 < 500ms。避免大纹理，使用 `MeshToonMaterial` 减少 shader 复杂度。
+### 6.2 Chrome 扩展约束
 
-4. **书签数据为空**：必须优雅处理无书签、无文件夹、空文件夹三种情况。
+- 新标签页无法使用 `window.open`，打开书签用 `window.location.href` 在当前页跳转
+- `@crxjs/vite-plugin` 支持 HMR，修改代码后扩展自动刷新
+- 首帧渲染目标 < 500ms（新标签页打开速度是关键指标）
+- 权限仅需 `bookmarks` + `search`，无 `host_permissions`
 
-5. **纹理风格统一**：所有手绘纹理需要保持一致的笔触和色调风格，否则画面会显得割裂。
+---
+
+## 七、文档体系
+
+```
+doc/
+├── demand.md          ← 需求文档（产品要做什么，用户看到什么）
+├── design.md          ← 设计文档（怎么实现，本文档）
+├── spec.md            ← 规格文档（GWT 场景、验收标准，【待编写】）
+├── art-style.md       ← 画风参考（罗小黑风格分析 + 本项目设计指导）
+└── discussions/       ← 讨论记录
+    ├── 001-animation-basics.md
+    └── 002-forest-extension-analysis.md
+
+agents/
+├── main-agent.md      ← 主控 Agent 设计 【待编写】
+├── scene-agent.md     ← 3D 场景 Agent 设计 【待编写】
+├── data-agent.md      ← 数据层 Agent 设计 【待编写】
+├── ui-agent.md        ← HTML 叠加层 Agent 设计 【待编写】
+└── test-agent.md      ← 测试 Agent 设计 【待编写】
+```
+
+### 文档关系
+
+```
+demand.md ──→ spec.md ──→ 实现代码
+                  │
+art-style.md ─────┤      ← 画面效果的验收标准
+                  │
+design.md ────────┘      ← 架构和流程约束
+                  │
+agents/*.md ──────┘      ← Agent 之间的协作规则
+```
+
+- **用户** 主要阅读 demand.md + art-style.md（确认产品和画风方向）
+- **Agent** 主要阅读 spec.md + design.md + agents/*.md（知道做什么和怎么做）
+- **spec.md 是唯一的验收标准**，所有 Agent 以它为基准

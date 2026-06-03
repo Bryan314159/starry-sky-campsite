@@ -14,7 +14,7 @@ See [项目梗概](doc/项目梗概.md) for the concept and [demand.md](doc/dema
 - **3D Rendering:** Three.js via React Three Fiber (R3F)
 - **UI Framework:** React
 - **Build Tool:** Vite
-- **Visual Style:** Hand-drawn / illustration style with toon materials, warm campsite vs. serene starry night
+- **Visual Style:** Hand-drawn / illustration style with toon materials, warm campsite vs. serene starry night. **Art style reference: 《罗小黑战记》(The Legend of Luo Xiaohei)** — flat-shaded "无影" technique, clean rounded lines, low-saturation治愈系 color palette. See [画风参考文档](doc/art-style.md).
 - **Data Source:** `chrome.bookmarks` API — flat read of top-level folders and their immediate children only
 
 ## Architecture
