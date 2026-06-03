@@ -402,8 +402,9 @@ Playwright 配置要点：
 doc/
 ├── demand.md          ← 需求文档（产品要做什么，用户看到什么）
 ├── design.md          ← 设计文档（怎么实现，本文档）
-├── spec.md            ← 规格文档（GWT 场景、验收标准，【待编写】）
+├── spec.md            ← 规格文档（GWT 场景、验收标准）
 ├── art-style.md       ← 画风参考（罗小黑风格分析 + 本项目设计指导）
+├── scene-design.md    ← 场景画面设计（构图、比例、相机、元素布局）
 └── discussions/       ← 讨论记录
     ├── 001-animation-basics.md
     └── 002-forest-extension-analysis.md

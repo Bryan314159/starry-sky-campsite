@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Starry Sky Campsite** (收藏夹可视化) — a Chrome new-tab extension that transforms browser bookmarks into an immersive visual journey. The user opens a new tab and enters a hand-drawn campsite scene where bookmark folders appear as wooden signposts. Clicking a signpost transitions to a starry night sky where each star represents a bookmark (click to open, hover to preview).
 
-See [项目梗概](doc/项目梗概.md) for the concept and [demand.md](doc/demand.md) for detailed requirements and technical decisions.
+See [项目梗概](doc/项目梗概.md) for the concept, [demand.md](doc/demand.md) for detailed requirements, and [scene-design.md](doc/scene-design.md) for visual composition specs.
 
 ## Tech Stack
 
