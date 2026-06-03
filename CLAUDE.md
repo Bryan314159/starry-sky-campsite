@@ -49,3 +49,10 @@ Per [demand.md](doc/demand.md#七功能范围):
 
 - **每个任务完成后必须提交 git commit**，不允许积累多个任务后批量提交。
 - **每次 git commit 前必须经过用户确认**，用户在确认前不得执行提交。确认方式：向用户展示待提交的文件清单和 commit message，等待用户明确同意后再执行 `git commit`。
+
+## Progress Tracking
+
+- **所有任务必须在 `checklist/progress.md` 中实时更新状态。**
+- 完成任务后，先更新 `checklist/progress.md` 中对应任务的标志为 ✅，再提交 git。
+- 新增任务时，在对应的开发阶段下追加条目。
+- `checklist/progress.md` 是项目进度的唯一真相源。
