@@ -1,54 +1,35 @@
+import { useState, useCallback } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { AppProvider, useAppContext } from './context/AppContext';
 import { useBookmarks } from './hooks/useBookmarks';
 import Campsite from './scenes/Campsite';
+import StarrySky from './scenes/StarrySky';
 
-function SceneRouter() {
-  const { state, dispatch } = useAppContext();
+function SceneRouter({ onHoverChange }) {
+  const { state } = useAppContext();
 
   if (!state.bookmarksLoaded) return null;
 
   return (
     <>
       {state.scene === 'campsite' && <Campsite />}
-      {state.scene === 'starry' && <StarryPlaceholder dispatch={dispatch} />}
-    </>
-  );
-}
-
-function StarryPlaceholder({ dispatch }) {
-  return (
-    <>
-      <ambientLight intensity={0.15} />
-      <mesh
-        position={[0, 0.01, -2]}
-        rotation={[-Math.PI / 2, 0, 0]}
-        onClick={() => dispatch({ type: 'RETURN_TO_CAMPSITE' })}
-        onPointerOver={(e) => {
-          e.object.scale.set(1.02, 1, 1.02);
-          document.body.style.cursor = 'pointer';
-        }}
-        onPointerOut={(e) => {
-          e.object.scale.set(1, 1, 1);
-          document.body.style.cursor = 'auto';
-        }}
-      >
-        <planeGeometry args={[1.5, 15]} />
-        <meshToonMaterial color="#c4a46c" />
-      </mesh>
-      <mesh position={[0, 3, -4]}>
-        <sphereGeometry args={[0.5, 8, 8]} />
-        <meshStandardMaterial color="#ffd700" emissive="#ffd700" emissiveIntensity={0.8} />
-      </mesh>
+      {state.scene === 'starry' && (
+        <StarrySky onHoverChange={onHoverChange} />
+      )}
     </>
   );
 }
 
 function AppInner() {
   useBookmarks();
+  const [hoverInfo, setHoverInfo] = useState({ visible: false, bookmark: null });
+
+  const handleHoverChange = useCallback((info) => {
+    setHoverInfo(info);
+  }, []);
 
   return (
-    <div style={{ width: '100vw', height: '100vh' }}>
+    <div style={{ width: '100vw', height: '100vh', position: 'relative' }}>
       <Canvas
         camera={{
           position: [0, 1.5, 5.0],
@@ -60,8 +41,33 @@ function AppInner() {
           camera.lookAt(0, 1.0, -2.0);
         }}
       >
-        <SceneRouter />
+        <SceneRouter onHoverChange={handleHoverChange} />
       </Canvas>
+
+      {/* Tooltip overlay */}
+      {hoverInfo.visible && hoverInfo.bookmark && (
+        <div
+          style={{
+            position: 'fixed',
+            top: '40%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            padding: '8px 16px',
+            borderRadius: 14,
+            background: 'rgba(10, 14, 42, 0.82)',
+            color: '#fff4c8',
+            fontFamily: '"STKaiti", "KaiTi", serif',
+            fontSize: 14,
+            fontWeight: 700,
+            backdropFilter: 'blur(8px)',
+            border: '1px solid rgba(255, 238, 170, 0.25)',
+            pointerEvents: 'none',
+            zIndex: 10,
+          }}
+        >
+          {hoverInfo.bookmark.title}
+        </div>
+      )}
     </div>
   );
 }
