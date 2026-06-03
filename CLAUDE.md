@@ -44,3 +44,8 @@ Per [demand.md](doc/demand.md#七功能范围):
 - Hand-drawn aesthetic means textures and toon shaders, not photorealistic PBR
 - All 3D assets (signpost, path, ground, stars, cat) should be procedurally generated or loaded as lightweight GLTF/texture assets
 - The cat character (design pending) will be the scene-transition protagonist
+
+## Git Workflow
+
+- **每个任务完成后必须提交 git commit**，不允许积累多个任务后批量提交。
+- **每次 git commit 前必须经过用户确认**，用户在确认前不得执行提交。确认方式：向用户展示待提交的文件清单和 commit message，等待用户明确同意后再执行 `git commit`。
