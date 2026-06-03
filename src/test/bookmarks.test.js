@@ -1,0 +1,240 @@
+import { describe, it, expect } from 'vitest';
+import { parseBookmarkTree, flattenLinks } from '../utils/bookmarks';
+
+// ── flattenLinks ──
+
+describe('flattenLinks', () => {
+  it('extracts direct bookmark children with id, title, url', () => {
+    const node = {
+      children: [
+        { id: '1', title: 'GitHub', url: 'https://github.com' },
+        { id: '2', title: 'MDN', url: 'https://developer.mozilla.org' },
+      ],
+    };
+    expect(flattenLinks(node)).toEqual([
+      { id: '1', title: 'GitHub', url: 'https://github.com' },
+      { id: '2', title: 'MDN', url: 'https://developer.mozilla.org' },
+    ]);
+  });
+
+  it('skips sub-folders (only returns items with url)', () => {
+    const node = {
+      children: [
+        { id: '1', title: 'GitHub', url: 'https://github.com' },
+        { id: '2', title: 'Nested Folder', children: [] },
+      ],
+    };
+    const result = flattenLinks(node);
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe('1');
+  });
+
+  it('returns empty array for node with no children', () => {
+    expect(flattenLinks({})).toEqual([]);
+    expect(flattenLinks(null)).toEqual([]);
+  });
+});
+
+// ── parseBookmarkTree ──
+
+function makeTree(folders = []) {
+  return [
+    {
+      id: '0',
+      title: 'Bookmarks',
+      children: [
+        {
+          id: '1',
+          title: '书签栏',
+          children: folders,
+        },
+        {
+          id: '2',
+          title: '其他书签',
+          children: [],
+        },
+      ],
+    },
+  ];
+}
+
+function makeFolder(id, title, bookmarks = []) {
+  return {
+    id,
+    title,
+    children: bookmarks.map((b) => ({
+      id: b.id,
+      title: b.title,
+      url: b.url,
+    })),
+  };
+}
+
+describe('parseBookmarkTree', () => {
+  it('SP2.4: excludes system folder "其他书签"', () => {
+    const tree = makeTree([
+      {
+        id: 'sys',
+        title: '其他书签',
+        children: [{ id: 'b1', title: 'Some Site', url: 'https://example.com' }],
+      },
+    ]);
+    const result = parseBookmarkTree(tree);
+    expect(result).toHaveLength(0);
+  });
+
+  it('SP2.4: excludes system folder "Other Bookmarks"', () => {
+    const tree = makeTree([
+      {
+        id: 'sys',
+        title: 'Other Bookmarks',
+        children: [{ id: 'b1', title: 'Site', url: 'https://example.com' }],
+      },
+    ]);
+    expect(parseBookmarkTree(tree)).toHaveLength(0);
+  });
+
+  it('SP2.3: excludes empty folders', () => {
+    const tree = makeTree([
+      {
+        id: 'empty',
+        title: 'Empty',
+        children: [],
+      },
+    ]);
+    expect(parseBookmarkTree(tree)).toHaveLength(0);
+  });
+
+  it('SP2.3: excludes folders with only sub-folders (no direct bookmarks)', () => {
+    const tree = makeTree([
+      {
+        id: 'nested',
+        title: 'Nested Only',
+        children: [
+          { id: 'sub', title: 'Sub', children: [{ id: 'deep', title: 'Deep', url: 'https://x.com' }] },
+        ],
+      },
+    ]);
+    expect(parseBookmarkTree(tree)).toHaveLength(0);
+  });
+
+  it('SP1.1: returns folder with bookmarks as children array', () => {
+    const tree = makeTree([
+      makeFolder('f1', '开发工具', [
+        { id: 'b1', title: 'GitHub', url: 'https://github.com' },
+        { id: 'b2', title: 'Claude', url: 'https://claude.ai' },
+      ]),
+    ]);
+    const result = parseBookmarkTree(tree);
+    expect(result).toHaveLength(1);
+    expect(result[0]).toEqual({
+      id: 'f1',
+      name: '开发工具',
+      children: [
+        { id: 'b1', title: 'GitHub', url: 'https://github.com' },
+        { id: 'b2', title: 'Claude', url: 'https://claude.ai' },
+      ],
+    });
+  });
+
+  it('SP1.1: returns multiple folders', () => {
+    const tree = makeTree([
+      makeFolder('f1', '开发工具', [{ id: 'b1', title: 'GitHub', url: 'https://github.com' }]),
+      makeFolder('f2', '设计灵感', [{ id: 'b2', title: 'Dribbble', url: 'https://dribbble.com' }]),
+    ]);
+    expect(parseBookmarkTree(tree)).toHaveLength(2);
+  });
+
+  it('SP2.1: returns empty array when no valid folders', () => {
+    expect(parseBookmarkTree([])).toEqual([]);
+    expect(parseBookmarkTree(null)).toEqual([]);
+    expect(parseBookmarkTree([{}])).toEqual([]);
+  });
+
+  it('uses English "Bookmarks Bar" toolbar node', () => {
+    const tree = [
+      {
+        id: '0',
+        children: [
+          {
+            id: '1',
+            title: 'Bookmarks Bar',
+            children: [
+              makeFolder('f1', 'Tools', [{ id: 'b1', title: 'GitHub', url: 'https://github.com' }]),
+            ],
+          },
+        ],
+      },
+    ];
+    expect(parseBookmarkTree(tree)).toHaveLength(1);
+  });
+
+  it('handles missing toolbar gracefully', () => {
+    const tree = [{ id: '0', children: [] }];
+    expect(parseBookmarkTree(tree)).toEqual([]);
+  });
+
+  it('fallback: finds toolbar by title contains "书签栏"', () => {
+    const tree = [
+      {
+        id: '0',
+        children: [
+          {
+            id: 'toolbar_____',
+            title: '书签栏',
+            children: [
+              makeFolder('f1', 'Tools', [{ id: 'b1', title: 'GitHub', url: 'https://github.com' }]),
+            ],
+          },
+        ],
+      },
+    ];
+    expect(parseBookmarkTree(tree)).toHaveLength(1);
+  });
+
+  it('fallback: finds toolbar with "Bookmarks bar" title (lowercase b)', () => {
+    const tree = [
+      {
+        id: '0',
+        children: [
+          {
+            id: 'toolbar_____',
+            title: 'Bookmarks bar',
+            children: [
+              makeFolder('f1', 'Tools', [{ id: 'b1', title: 'GH', url: 'https://github.com' }]),
+            ],
+          },
+        ],
+      },
+    ];
+    expect(parseBookmarkTree(tree)).toHaveLength(1);
+  });
+
+  it('fallback: uses first non-system folder if toolbar id/title not recognized', () => {
+    const tree = [
+      {
+        id: '0',
+        children: [
+          {
+            id: 'unknown-1',
+            title: 'My Stuff',
+            children: [
+              makeFolder('f1', 'Dev', [{ id: 'b1', title: 'GH', url: 'https://github.com' }]),
+            ],
+          },
+          {
+            id: 'unknown-2',
+            title: '其他书签',
+            children: [
+              { id: 'b2', title: 'Site', url: 'https://example.com' },
+            ],
+          },
+        ],
+      },
+    ];
+    const result = parseBookmarkTree(tree);
+    // Should find "My Stuff" as fallback since "其他书签" is excluded
+    expect(result).toHaveLength(1);
+    expect(result[0].name).toBe('Dev');
+  });
+});

@@ -43,13 +43,31 @@ export function parseBookmarkTree(tree) {
   if (!root || !Array.isArray(root.children)) return [];
 
   // Find "Bookmarks Bar" / "书签栏" node
-  const toolbar = root.children.find(
+  // Chrome uses id="1" for the bookmarks bar, but may also use "toolbar_____"
+  // Fall back to matching by known titles or parentId=0 children
+  let toolbar = root.children?.find(
     (node) =>
       node.id === '1' ||
       node.id === 'toolbar_____' ||
-      node.title === '书签栏' ||
-      node.title === 'Bookmarks Bar',
+      (node.title || '').includes('书签栏') ||
+      (node.title || '').includes('Bookmarks Bar') ||
+      (node.title || '').includes('Bookmarks bar'),
   );
+
+  // Fallback: if toolbar not found by id or title, use any non-system folder at root level
+  if (!toolbar || !Array.isArray(toolbar.children)) {
+    if (Array.isArray(root.children)) {
+      for (const child of root.children) {
+        if (child.children && !child.url && child.children.length > 0) {
+          const title = (child.title || '').trim();
+          if (!SYSTEM_FOLDERS.has(title)) {
+            toolbar = child;
+            break;
+          }
+        }
+      }
+    }
+  }
 
   if (!toolbar || !Array.isArray(toolbar.children)) return [];
 
