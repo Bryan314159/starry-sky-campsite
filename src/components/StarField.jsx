@@ -26,17 +26,20 @@ export default function StarField({ bookmarks, onHoverChange }) {
       const r3 = seededRandom(seed + 'z');
       const r4 = seededRandom(seed + 's');
 
-      // Spherical distribution in upper hemisphere (elevation 15°-90°)
-      const azimuth = r1 * Math.PI * 2;
-      const elevation = r2 * Math.PI * 0.42 + 0.25; // ~14° to 90°
-      const radius = 16 + r3 * 2;
+      // Distribute stars in a frustum-friendly space:
+      // camera at (0, 0.2, 0.5) looking at (0, 8, -5)
+      // place stars in upper hemisphere view, distance 4-9
+      const azimuth = r1 * Math.PI * 2; // 0-360° horizontal
+      // Elevation 25-80° from camera position
+      const elevation = r2 * Math.PI * 0.4 + 0.45; // ~25°-90°
+      const radius = 4 + r3 * 5; // 4-9
 
       const x = radius * Math.cos(elevation) * Math.sin(azimuth);
-      const y = radius * Math.sin(elevation);
+      const y = radius * Math.sin(elevation) + 0.2; // camera y offset
       const z = radius * Math.cos(elevation) * Math.cos(azimuth);
 
-      // Size: mostly small, few large (natural distribution)
-      const size = 0.06 + r4 * 0.14;
+      // Size
+      const size = 0.08 + r4 * 0.16;
 
       return {
         key: bookmark.id,

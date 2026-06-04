@@ -44,22 +44,27 @@ export function useBookmarks() {
   const { dispatch } = useAppContext();
 
   useEffect(() => {
+    let cancelled = false;
+
     async function load() {
       if (hasChromeBookmarks()) {
         try {
           const tree = await chrome.bookmarks.getTree();
+          if (cancelled) return;
           const folders = parseBookmarkTree(tree);
           dispatch({ type: 'SET_BOOKMARKS', payload: folders });
         } catch (err) {
           console.warn('[星空营地] Failed to load bookmarks:', err);
-          dispatch({ type: 'SET_BOOKMARKS', payload: [] });
+          if (!cancelled) {
+            dispatch({ type: 'SET_BOOKMARKS', payload: [] });
+          }
         }
       } else {
-        // Development: use mock data
         dispatch({ type: 'SET_BOOKMARKS', payload: MOCK_FOLDERS });
       }
     }
 
     load();
+    return () => { cancelled = true; };
   }, [dispatch]);
 }

@@ -42,57 +42,74 @@ export function parseBookmarkTree(tree) {
   const root = tree[0];
   if (!root || !Array.isArray(root.children)) return [];
 
-  // Find "Bookmarks Bar" / "书签栏" node
-  // Chrome uses id="1" for the bookmarks bar, but may also use "toolbar_____"
-  // Fall back to matching by known titles or parentId=0 children
-  let toolbar = root.children?.find(
+  // Collect candidate toolbar nodes: any non-system folder at root level
+  // (or inside "其他书签" if bookmarks bar is empty)
+  const rootCandidates = root.children.filter((node) => {
+    if (!node || !Array.isArray(node.children)) return false;
+    if (node.url) return false;
+    return true;
+  });
+
+  // Decide which folders to scan for bookmark items:
+  // - The bookmarks bar (id "1" or "toolbar_____" or "书签栏" title)
+  // - "其他书签" (Other Bookmarks) - it may contain real bookmark folders
+  // The system folders themselves are NOT excluded here; we just look inside them
+  // for user-created folders.
+
+  const targetRoots = [];
+
+  const bookmarksBar = rootCandidates.find(
     (node) =>
       node.id === '1' ||
       node.id === 'toolbar_____' ||
       (node.title || '').includes('书签栏') ||
-      (node.title || '').includes('Bookmarks Bar') ||
-      (node.title || '').includes('Bookmarks bar'),
+      (node.title || '').toLowerCase().includes('bookmark bar'),
   );
+  if (bookmarksBar) targetRoots.push(bookmarksBar);
 
-  // Fallback: if toolbar not found by id or title, use any non-system folder at root level
-  if (!toolbar || !Array.isArray(toolbar.children)) {
-    if (Array.isArray(root.children)) {
-      for (const child of root.children) {
-        if (child.children && !child.url && child.children.length > 0) {
-          const title = (child.title || '').trim();
-          if (!SYSTEM_FOLDERS.has(title)) {
-            toolbar = child;
-            break;
-          }
-        }
+  const otherBookmarks = rootCandidates.find(
+    (node) =>
+      node.id === '2' ||
+      node.id === 'unfiled_____' ||
+      (node.title || '').includes('其他书签') ||
+      (node.title || '').toLowerCase().includes('other bookmark'),
+  );
+  if (otherBookmarks) targetRoots.push(otherBookmarks);
+
+  // If neither was found, fall back to all root folders except empty/system
+  if (targetRoots.length === 0) {
+    for (const node of rootCandidates) {
+      const title = (node.title || '').trim();
+      if (title && !SYSTEM_FOLDERS.has(title)) {
+        targetRoots.push(node);
       }
     }
   }
 
-  if (!toolbar || !Array.isArray(toolbar.children)) return [];
-
+  // Collect bookmark folders from target roots
   const folders = [];
+  const seenIds = new Set();
 
-  for (const node of toolbar.children) {
-    // Only process folders (no url property means it's a folder)
-    if (node.url) continue;
+  for (const targetRoot of targetRoots) {
+    for (const node of targetRoot.children) {
+      if (node.url) continue;
 
-    const title = (node.title || '').trim();
-    if (!title) continue;
+      const title = (node.title || '').trim();
+      if (!title) continue;
 
-    // Exclude system folders
-    if (SYSTEM_FOLDERS.has(title)) continue;
+      // Skip if we've already added this folder (avoid dupes)
+      if (seenIds.has(node.id)) continue;
 
-    const links = flattenLinks(node);
+      const links = flattenLinks(node);
+      if (links.length === 0) continue;
 
-    // Exclude empty folders
-    if (links.length === 0) continue;
-
-    folders.push({
-      id: node.id,
-      name: title,
-      children: links,
-    });
+      seenIds.add(node.id);
+      folders.push({
+        id: node.id,
+        name: title,
+        children: links,
+      });
+    }
   }
 
   return folders;

@@ -1,12 +1,13 @@
 # 项目进度跟踪
 
-**最后更新：** 2026-06-03
+**最后更新：** 2026-06-04
 
 ### 新增任务
 
 | # | 任务 | 状态 | 备注 |
 |---|------|:---:|------|
 | 2.10 | 场景画面设计文档 + 构图调整 | ✅ | 三分法构图，doc/scene-design.md |
+| 0.8 | art-agent 文生图 Agent prompt 编写 | ✅ | agents/art-agent.md，基于 art-style.md 提炼可复用的 T2I Prompt 模板（含 STYLE_PREFIX / PALETTE_WARM+COLD / NEGATIVE_PROMPT / 自检清单） |
 
 ---
 
