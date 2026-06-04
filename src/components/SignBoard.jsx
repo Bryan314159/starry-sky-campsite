@@ -56,7 +56,7 @@ function createTextTexture(text) {
   return tex;
 }
 
-export default function SignBoard({ folder, position, onClick }) {
+export default function SignBoard({ folder, position, rotationY = 0, onClick }) {
   const ref = useRef();
 
   const texture = useMemo(
@@ -64,13 +64,11 @@ export default function SignBoard({ folder, position, onClick }) {
     [folder.name],
   );
 
-  // Billboard: keep signboards facing camera (face +Z by default)
-  // Camera looks toward -Z, so planeGeometry's default normal is already toward camera.
-
   return (
     <mesh
       ref={ref}
       position={position}
+      rotation={[0, rotationY, 0]}
       onClick={(e) => {
         e.stopPropagation();
         onClick?.(folder);
@@ -83,7 +81,7 @@ export default function SignBoard({ folder, position, onClick }) {
         document.body.style.cursor = 'auto';
       }}
     >
-      <planeGeometry args={[1.0, 0.25]} />
+      <planeGeometry args={[1.2, 0.25]} />
       <meshToonMaterial map={texture} side={THREE.DoubleSide} />
     </mesh>
   );
