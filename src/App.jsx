@@ -55,59 +55,9 @@ function AppInner() {
     visible: false,
     bookmark: null,
   });
-  const [diag, setDiag] = useState(null);
 
   const handleHoverChange = useCallback((info) => {
     setHoverInfo(info);
-  }, []);
-
-  // Diagnostic: actually call getTree and display result
-  useEffect(() => {
-    if (typeof window.chrome === 'undefined' || !window.chrome.bookmarks) {
-      setDiag({ error: 'no chrome.bookmarks' });
-      return;
-    }
-
-    const out = {
-      keys: Object.keys(window.chrome.bookmarks),
-      apiType: 'present',
-    };
-
-    // Try both callback and promise
-    try {
-      window.chrome.bookmarks.getTree((tree) => {
-        out.callbackResult = {
-          type: typeof tree,
-          length: tree?.length,
-          firstNode: tree?.[0] ? {
-            id: tree[0].id,
-            title: tree[0].title,
-            childCount: tree[0].children?.length,
-            firstChild: tree[0].children?.[0] ? {
-              id: tree[0].children[0].id,
-              title: tree[0].children[0].title,
-              childCount: tree[0].children[0].children?.length,
-            } : null,
-          } : null,
-        };
-        setDiag({ ...out });
-        console.log('[星空营地] getTree callback result:', out.callbackResult);
-      });
-    } catch (e) {
-      out.callbackError = e.message;
-    }
-
-    // Also try promise
-    Promise.resolve(window.chrome.bookmarks.getTree()).then((tree) => {
-      out.promiseResult = {
-        type: typeof tree,
-        length: tree?.length,
-      };
-      setDiag({ ...out });
-    }).catch((e) => {
-      out.promiseError = e.message;
-      setDiag({ ...out });
-    });
   }, []);
 
   return (
@@ -126,30 +76,6 @@ function AppInner() {
 
       <SearchBar />
       <Tooltip hoverInfo={hoverInfo} />
-
-      {diag && (
-        <div
-          style={{
-            position: 'fixed',
-            top: 8,
-            left: 8,
-            zIndex: 100,
-            padding: 10,
-            background: 'rgba(0,0,0,0.9)',
-            color: '#0f0',
-            fontFamily: 'monospace',
-            fontSize: 10,
-            lineHeight: 1.4,
-            borderRadius: 4,
-            maxWidth: 600,
-            maxHeight: '90vh',
-            overflow: 'auto',
-            whiteSpace: 'pre-wrap',
-          }}
-        >
-          {JSON.stringify(diag, null, 2)}
-        </div>
-      )}
     </div>
   );
 }

@@ -83,7 +83,7 @@ export default function SignBoard({ folder, position, onClick }) {
         document.body.style.cursor = 'auto';
       }}
     >
-      <planeGeometry args={[1.4, 0.35]} />
+      <planeGeometry args={[1.0, 0.25]} />
       <meshToonMaterial map={texture} side={THREE.DoubleSide} />
     </mesh>
   );
