@@ -56,7 +56,7 @@ function createTextTexture(text) {
   return tex;
 }
 
-export default function SignBoard({ folder, position, rotationY = 0, onClick }) {
+export default function SignBoard({ folder, position, onClick }) {
   const ref = useRef();
 
   const texture = useMemo(
@@ -68,7 +68,6 @@ export default function SignBoard({ folder, position, rotationY = 0, onClick }) 
     <mesh
       ref={ref}
       position={position}
-      rotation={[0, rotationY, 0]}
       onClick={(e) => {
         e.stopPropagation();
         onClick?.(folder);
