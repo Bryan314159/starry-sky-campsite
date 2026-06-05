@@ -13,11 +13,11 @@ import * as THREE from 'three';
  */
 function buildPathShape() {
   const shape = new THREE.Shape();
-  // 16 control points along the path; left and right edges jittered
-  const segments = 16;
+  // 18 control points along the path; left and right edges jittered,
+  // centerline follows a gentle curve (Bezier-ish).
+  const segments = 18;
   const length = 15;
   const startZ = 4.0;
-  const endZ = startZ - length;
   const startHalfWidth = 1.0;
   const endHalfWidth = 0.18;
 
@@ -25,7 +25,16 @@ function buildPathShape() {
   const jitter = [
     0.04, -0.05, 0.06, -0.03, 0.05, -0.07, 0.03, -0.04,
     0.06, -0.05, 0.04, -0.06, 0.05, -0.04, 0.07, -0.03,
+    0.05, -0.04,
   ];
+
+  // Centerline curve: gentle sway to the left, then back.
+  // At t=0 → 0, t=0.5 → -0.7 (left), t=1 → 0.3
+  const centerlineOffset = (t) => {
+    const a = -0.7 * Math.sin(t * Math.PI);
+    const b = 0.3 * t;
+    return a + b;
+  };
 
   // Start at front-left
   shape.moveTo(-startHalfWidth, startZ);
@@ -35,7 +44,8 @@ function buildPathShape() {
     const t = i / segments;
     const z = startZ - t * length;
     const halfW = THREE.MathUtils.lerp(startHalfWidth, endHalfWidth, t);
-    const x = -halfW + jitter[i % jitter.length] * (1 - t);
+    const cx = centerlineOffset(t);
+    const x = cx - halfW + jitter[i % jitter.length] * (1 - t);
     shape.lineTo(x, z);
   }
 
@@ -44,7 +54,8 @@ function buildPathShape() {
     const t = i / segments;
     const z = startZ - t * length;
     const halfW = THREE.MathUtils.lerp(startHalfWidth, endHalfWidth, t);
-    const x = halfW - jitter[(i + 5) % jitter.length] * (1 - t);
+    const cx = centerlineOffset(t);
+    const x = cx + halfW - jitter[(i + 5) % jitter.length] * (1 - t);
     shape.lineTo(x, z);
   }
 

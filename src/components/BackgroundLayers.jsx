@@ -1,4 +1,5 @@
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
+import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 
 /**
@@ -99,6 +100,16 @@ function Lake() {
 
 function MistBand() {
   const tex = useMemo(() => createMistTexture(), []);
+  const matRef = useRef();
+  // Slow horizontal drift of the texture's offset — gives the
+  // "晨雾微动" (morning mist drift) feel referenced in art-style.md
+  // §6.2 万物有灵的诗意.
+  useFrame(({ clock }) => {
+    if (!matRef.current) return;
+    const t = clock.getElapsedTime();
+    matRef.current.map.offset.x = t * 0.006;
+    matRef.current.map.needsUpdate = false;
+  });
   return (
     <mesh
       position={[0, 1.0, -7.2]}
@@ -106,6 +117,7 @@ function MistBand() {
     >
       <planeGeometry args={[24, 2.2]} />
       <meshBasicMaterial
+        ref={matRef}
         map={tex}
         transparent
         opacity={0.85}

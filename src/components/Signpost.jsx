@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import * as THREE from 'three';
 import SignBoard from './SignBoard';
+import SignpostBird from './SignpostBird';
 
 /**
  * Layout signboards in two vertical columns:
@@ -118,11 +119,14 @@ function SignpostPole() {
         <meshToonMaterial color="#7a553a" />
       </mesh>
 
-      {/* Cap on top — little wooden knob */}
+      {/* Cap on top — little wooden knob (replaced by bird) */}
       <mesh position={[0, 1.9, 0]} castShadow raycast={() => null}>
         <sphereGeometry args={[0.16, 12, 10]} />
         <meshToonMaterial color="#8b6238" />
       </mesh>
+
+      {/* Perched bird on top of the post — matches reference image detail */}
+      <SignpostBird />
     </>
   );
 }

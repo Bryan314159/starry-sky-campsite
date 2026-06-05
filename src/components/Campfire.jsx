@@ -116,6 +116,16 @@ export default function Campfire() {
       <StoneRing />
       <Logs />
       <FlameCluster />
+      {/* Warm fire-light — gently pulses with the flame breathing.
+          distance=4 limits the cast so the signpost doesn't go fully orange,
+          intensity=2.0 gives a visible warm wash on nearby ground/grass. */}
+      <pointLight
+        position={[0, 0.5, 0]}
+        intensity={2.2}
+        distance={4.5}
+        decay={1.6}
+        color="#ffb168"
+      />
     </group>
   );
 }
