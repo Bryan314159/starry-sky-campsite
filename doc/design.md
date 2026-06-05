@@ -77,33 +77,88 @@ GWT 格式的优势：
 
 ### 2.2 技术栈
 
-| 层面 | 选择 | 理由 |
+> **最近更新（2026-06-05）：** 详见 `doc/decisions/ADR-002`（技术栈重选）与 `doc/decisions/ADR-004`（场景一方案 C）。
+> drei 已从"装而不用"升级为"释放价值"；postprocessing 暂缓；Vite 升 8.0、R3F 升 9.6、three 0.184。
+
+| 层面 | 选择 | 备注 |
 |------|------|------|
 | 框架 | React 19.x | 组件化状态管理，R3F 的 React 封装 |
-| 3D 渲染 | Three.js + @react-three/fiber | 真 3D 空间，真实透视和光照 |
-| 3D 工具集 | @react-three/drei | 天空球、文字、射线检测等便捷封装 |
-| 构建 | Vite 6.x + @crxjs/vite-plugin | 构建快，一键打包 Chrome 扩展 |
+| 3D 渲染 | three 0.184 + @react-three/fiber 9.6 | 真 3D 空间；R3F 是 React + Three.js 最佳封装 |
+| 3D 工具集 | @react-three/drei 10.7 | **已使用**（见下方"drei 已用清单"） |
+| 构建 | Vite 8.0 + @crxjs/vite-plugin 2.4 | build ~280ms，满足 4.5 首帧 < 500ms |
 | 扩展标准 | Manifest V3 | Chrome 当前强制标准 |
-| 语言 | JavaScript (JSX) | 无类型约束，快速开发 |
-| 状态管理 | React Context + useReducer | 状态简单，无需引入外部库 |
-| 后期效果 | @react-three/postprocessing | 后续阶段加轮廓线、色彩分级 |
+| 语言 | JavaScript (JSX) | 无类型约束；TS 暂缓（`ADR-002`） |
+| 状态管理 | React Context + useReducer | 状态 4 个字段，不需 zustand/jotai |
+| 后期效果 | @react-three/postprocessing | **暂缓**（`ADR-002`，+70KB，待 Bayer 量化或 Bloom 需求出现） |
+| 调试工具 | maath (`damp3`) | 相机阻尼过渡用（`ADR-002 任务 2.16`） |
+| 测试 | Vitest 4 + Playwright + Testing Library | 28 tests + 2 E2E；Playwright 支持扩展环境 |
+
+**drei 已用清单（5 项，0 bundle 增量）**
+
+| drei 子功能 | 用途 | 任务 | ROI |
+|------|------|:---:|:---:|
+| `<Outlines screenspace>` | 全场景描边（Signpost / SignBoard / Campfire / ForegroundFlowers / SignpostBird / 远景树） | 2.14 | ⭐⭐⭐⭐⭐ |
+| `MeshToonMaterial` + 3 阶 `gradientMap` + `NearestFilter` | 全场景 toon 化 | 2.15 | ⭐⭐⭐⭐⭐ |
+| `<PerspectiveCamera>` + makeDefault + maath 阻尼 | 场景切换慢切（1.5-2.0s） | 2.16 | ⭐⭐⭐ |
+| `<Text>` | 替代 SignBoard DOM 文字（保持 3D 透视） | 2.17 | ⭐⭐⭐ |
+| `<Sparkles>` | 替代自制 Fireflies | 2.18 | ⭐⭐⭐ |
+
+**drei 显式不引入（4 项）**
+
+- `<Float>` —— 与"静止稳重"氛围冲突
+- `<Environment>` —— 违反 toon 风格的"无影"原则
+- 自定义 Inverted-hull ShaderMaterial —— 有 `<Outlines>` 就够
+- 其他（Stars/OrbitControls/Html 等）—— 本项目不需要
+
+**暂缓引入（第二批实施）**
+
+- `@react-three/postprocessing` —— 实施 Bayer 颜色量化或 Bloom 时
+- `glsl-noise` / `three-custom-shader-material` —— 实施 SkyDome 域扭曲 fBm 时
+- TypeScript —— 代码量翻倍或多人协作出
+- Zod / Valibot —— 出现真实 chrome.bookmarks 畸形数据时
 
 ### 2.3 组件树
 
+> **场景一方案变更（2026-06-05）：** 改为"静态图 + 3D 浮层"（`ADR-004` 方案 C）。
+> 静态图（`public/scenes/campsite-bg.webp`）做画布，3D 元素（路牌/篝火/萤火虫/小鸟/小路）作为浮层叠加在图上。
+> 场景二（星空）暂不改变，保持纯 3D 渲染。
+
 ```
 <App>
-├── <AppProvider>                 ← Context: scene, folders, selectedFolder, bookmarks
+├── <AppProvider>                 ← Context: scene, folders, selectedFolder, bookmarks, bgImage
 │   │
 │   ├── <Canvas>                  ← R3F 3D 画布
-│   │   ├── {scene === 'campsite' && <Campsite>}
-│   │   │     SkyDome(day) / Ground / Path / Signpost → SignBoard[]
+│   │   ├── {scene === 'campsite' && <Campsite>}   ← 图片 + 3D 浮层（ADR-004 方案 C）
+│   │   │     BackgroundImage / Path / Signpost → SignBoard[]
+│   │   │     / Campfire (呼吸+火焰) / Fireflies (Sparkles) / SignpostBird (飞过)
 │   │   │
-│   │   └── {scene === 'starry'  && <StarrySky>}
+│   │   └── {scene === 'starry'  && <StarrySky>}   ← 保持现状
 │   │         SkyDome(night) / StarField → Star[] / Ground / Path / Cat
 │   │
 │   ├── <SearchBar />             ← HTML 叠加层，始终可见
-│   └── <Tooltip />               ← HTML 叠加层，hover 星星时显示
+│   ├── <Tooltip />               ← HTML 叠加层，hover 星星时显示
+│   └── <ImagePicker />           ← HTML 叠加层（任务 2.24），popup 选图 / 每日换
 ```
+
+**场景一元素清单（方案 C 后）**
+
+| 元素 | 类型 | 来源 | z 位置 | 备注 |
+|------|------|------|:---:|------|
+| BackgroundImage | 静态图 | `public/scenes/campsite-bg.webp` | 0 | 替换 SkyDome/Ground/BackgroundLayers |
+| Signpost + SignBoard | 3D 浮层 | 任务 2.14/2.15/2.17 | 1.5 | 沉浸感核心 + 书签交互 |
+| Campfire | 3D 浮层 | 任务 2.14/2.15 | 1.0 | 氛围（呼吸+火焰） |
+| Fireflies (Sparkles) | 3D 浮层 | 任务 2.18 | 1.0 | 氛围（飘忽+闪烁） |
+| SkyBirds (SignpostBird) | 3D 浮层 | 任务 2.14 | 1.0 | 氛围（飞过） |
+| Path | 3D 浮层 | 沿用 | 0.5 | 引导线（虽小，沉浸感贡献大） |
+| SearchBar / Tooltip / ImagePicker | HTML | 沿用 | ∞ | 功能性 |
+
+**场景一已删除的元素（`ADR-004`）**
+
+- ~~SkyDome(day)~~ —— 图片取代天空
+- ~~Ground~~ —— 图片里已有地面
+- ~~BackgroundLayers~~（远山/远树/湖）—— 图片里已有
+- ~~GrassTufts / ForegroundFlowers~~ —— 图片里已有草地和花
+- ~~ScorchMark~~ —— 决定保留或删除（任务 2.22 实施时再定）
 
 ### 2.4 数据流
 
@@ -126,6 +181,9 @@ AppContext ── selectedFolder ────▶ StarrySky 渲染星星
 
 ### 2.5 项目文件结构
 
+> **场景一方案 C 实施后（`ADR-004`）：** 静态资源从 `textures/` 改为 `scenes/`，组件从手绘模拟改为图 + 3D 浮层。
+> 加粗/标 ✨ 的为新增/变更项；标 ❌ 的为已删除项。
+
 ```
 starry-sky-campsite/
 ├── manifest.json
@@ -138,6 +196,11 @@ starry-sky-campsite/
 │   ├── design.md                 #   设计文档（本文件）
 │   ├── spec.md                   #   规格文档（GWT 场景）
 │   ├── art-style.md              #   画风参考文档
+│   ├── decisions/                #   ADR 决策记录（2026-06-05+ 新增）
+│   │   ├── ADR-001-chunk-size-warning.md
+│   │   ├── ADR-002-tech-stack-reselection.md
+│   │   ├── ADR-003-prioritize-scene1-to-reference.md
+│   │   └── ADR-004-scene1-photo-plus-3d-overlay.md
 │   └── discussions/              #   讨论记录
 │
 ├── agents/                       # Agent 设计文档
@@ -147,35 +210,44 @@ starry-sky-campsite/
 │   ├── ui-agent.md
 │   └── test-agent.md
 │
-├── public/textures/              # 手绘纹理静态资源
-│   ├── grass.png
-│   ├── wood.png
-│   ├── sky-day.png
-│   ├── sky-night.png
-│   ├── signboard-blank.png
-│   └── star.png
+├── public/
+│   ├── scenes/                   # ✨ 场景背景图（任务 2.21/2.24）
+│   │   ├── campsite-bg.webp      #   场景一主背景图（用户提供的图，转 WebP）
+│   │   └── campsite-bg-alt-*.webp #   多图轮播候选（任务 2.24）
+│   └── textures/                 # ❌ 旧：手绘纹理（场景一方案 C 后不再需要）
+│       └── star.png              #   仅星空 star.png 保留
 │
 └── src/
     ├── main.jsx                  # 入口
     ├── App.jsx                   # 顶层组装
-    ├── context/AppContext.jsx    # 全局状态
-    ├── hooks/useBookmarks.js     # 书签读取
+    ├── context/AppContext.jsx    # 全局状态（+ bgImage 字段）
+    ├── hooks/
+    │   ├── useBookmarks.js       # 书签读取
+    │   └── useBackgroundImage.js # ✨ 背景图加载（任务 2.22）
     ├── scenes/
-    │   ├── Campsite.jsx
-    │   └── StarrySky.jsx
+    │   ├── Campsite.jsx          # 场景一：图 + 3D 浮层
+    │   └── StarrySky.jsx         # 场景二：保持纯 3D
     ├── components/
-    │   ├── Ground.jsx
-    │   ├── Path.jsx
-    │   ├── SkyDome.jsx
-    │   ├── Signpost.jsx
-    │   ├── SignBoard.jsx
-    │   ├── StarField.jsx
-    │   ├── Star.jsx
-    │   └── Cat.jsx
+    │   ├── ✨ BackgroundImage.jsx   # 营地背景图（任务 2.22）
+    │   ├── ❌ SkyDome.jsx            # 场景一不再需要
+    │   ├── ❌ Ground.jsx             # 图片里已有地面
+    │   ├── ❌ BackgroundLayers.jsx   # 图片里已有远景
+    │   ├── ❌ ForegroundFlowers.jsx  # 图片里已有花
+    │   ├── Path.jsx              # 引导线（保留）
+    │   ├── Signpost.jsx          # 路牌柱（任务 2.14/2.15）
+    │   ├── SignBoard.jsx         # 指示牌（任务 2.14/2.15/2.17 用 drei <Text>）
+    │   ├── Campfire.jsx          # 篝火（任务 2.14/2.15）
+    │   ├── Fireflies.jsx         # ❌ 删除（被 drei <Sparkles> 替代，任务 2.18）
+    │   ├── StarField.jsx         # 星空
+    │   ├── Star.jsx              # 星星
+    │   └── Cat.jsx               # 猫
     ├── overlays/
     │   ├── SearchBar.jsx
-    │   └── Tooltip.jsx
-    └── utils/bookmarks.js
+    │   ├── Tooltip.jsx
+    │   └── ✨ ImagePicker.jsx        # 背景图选择器（任务 2.24）
+    └── utils/
+        ├── bookmarks.js
+        └── ✨ toonGradientMap.js    # 3 阶 toon gradientMap 工具（任务 2.15）
 ```
 
 ---
@@ -342,12 +414,43 @@ Playwright 配置要点：
 
 ### 阶段 2：数据层 + 场景一（data-agent + scene-agent 并行）
 
-- [ ] 书签解析函数 + Mock 数据
-- [ ] AppContext 状态管理
-- [ ] 营地基础场景（地面 + 小路 + 天空）
-- [ ] 路牌柱 + 指示牌 + 文字
-- [ ] 光照调试
-- [ ] 点击路牌切换场景
+> **2026-06-05 重大变更：** 场景一从"纯 3D 渲染"改为"静态图 + 3D 浮层"（方案 C，`ADR-004`）。
+> 任务清单做对应调整：删除 2.19/2.20；新增 2.21-2.25；保留 2.14-2.18（drei 价值释放）。
+
+#### 已完成（v1）
+
+- [x] 书签解析函数 + Mock 数据
+- [x] AppContext 状态管理
+- [x] 营地基础场景（地面 + 小路 + 天空）—— **v1 形态，方案 C 后地面/天空被图替代**
+- [x] 路牌柱 + 指示牌 + 文字
+- [x] 光照调试
+- [x] 点击路牌切换场景
+
+#### 升级任务（v2，对应 `ADR-002` / `ADR-003` / `ADR-004`）
+
+**第一批：材质与描边（材质分 +3）**
+
+- [ ] **2.14** drei `<Outlines screenspace>` 包裹 Signpost / SignBoard / Campfire / ForegroundFlowers / SignpostBird / 远景树（`ADR-002` ⭐⭐⭐⭐⭐）
+- [ ] **2.15** 全场景 `MeshToonMaterial` + 3 阶 `gradientMap` + `NearestFilter`，新建 `utils/toonGradientMap.js`（`ADR-002` ⭐⭐⭐⭐⭐）
+
+**第二批：体验与立体感（体验分 +1）**
+
+- [ ] **2.16** 场景切换相机阻尼过渡（drei `<PerspectiveCamera>` + maath `damp3`），1.5-2.0s（`ADR-002` ⭐⭐⭐）
+- [ ] **2.17** drei `<Text>` 替代 SignBoard DOM 文字（`ADR-002` ⭐⭐⭐）
+- [ ] **2.18** drei `<Sparkles>` 替代自制 Fireflies（`ADR-002` ⭐⭐⭐）
+
+**第三批：方案 C 资源与标定（`ADR-004` ⭐⭐⭐⭐）**
+
+- [ ] **2.21** 准备图资源（用户提供原始图 → 转 WebP + 压缩，3840×2160，色调与 `art-style.md §4.3` 对齐）
+- [ ] **2.22** BackgroundImage 组件（`PlaneGeometry` + 纹理加载），替换 SkyDome + Ground + BackgroundLayers
+- [ ] **2.23** 标定 3D 元素在图上的位置（关键成本——每张图需手工标定）
+- [ ] **2.24** 多图支持：popup 选图 + 每日换（Are.na 风格的"每日一图"）
+- [ ] **2.25** 视觉回归（对照参考图，验收）
+
+**已删除**（`ADR-004` 取代 `ADR-003` 的纯 3D 升级路线）
+
+- ❌ ~~2.19 加湖面~~ —— 图片里已有湖面
+- ❌ ~~2.20 远景树丛/远山改 billboard impostor~~ —— 图片里已有远景
 
 ### 阶段 3：场景二 + UI 叠加层（scene-agent + ui-agent 并行）
 
@@ -376,16 +479,26 @@ Playwright 配置要点：
 
 ### 6.1 关键决策记录
 
-| 决策 | 选择 | 理由 |
-|------|------|------|
-| 渲染方案 | Three.js + R3F | 真 3D 透视是核心体验（小猫沿路行走需要真实 Z 轴深度），CSS 2D 方案无法满足 |
-| 画风实现 | Toon Shader 模拟 2D 手绘 | 参考罗小黑"无影平涂"风格，`MeshToonMaterial` 天然是 2-3 阶色阶，最接近手绘"平涂"质感 |
-| 状态管理 | React Context | 状态量少（scene + folders + selectedFolder），不需要 Redux/Zustand |
-| 场景切换 MVP | 瞬时切换 | 先保证功能完整、加载快速，过场动画延后 |
-| 搜索实现 | chrome.search.query | 触发浏览器默认搜索引擎，不自己实现搜索 |
-| 书签读取 | 仅一级文件夹 + 直接子书签 | 扁平化，避免嵌套复杂度 |
-| 构建工具 | Vite + @crxjs/vite-plugin | 一键打包扩展，HMR 支持 |
-| 无路由库 | state 驱动场景切换 | 只有两个场景，用 `scene` 状态切换比引入 React Router 更简单 |
+> **最近更新（2026-06-05）：** 详见 `doc/decisions/`。
+> - `ADR-002` — drei 5 项已使用 / postprocessing 暂缓
+> - `ADR-003` — 交付优先级：先攻场景一达参考图水准
+> - `ADR-004` — 场景一方案 C：静态图 + 3D 浮层
+
+| 决策 | 选择 | 理由 | ADR |
+|------|------|------|:---:|
+| 渲染方案 | Three.js + R3F | 真 3D 透视是核心体验（小猫沿路行走需要真实 Z 轴深度），CSS 2D 方案无法满足 | — |
+| **场景一构成** | **静态图 + 3D 浮层（方案 C）** | 用代码还原一张图天然有"插画感不足"短板（材质分 5/9）；图片 + 3D 浮层综合分 8.5 vs 纯 3D 7.5 | `ADR-004` |
+| **场景一图片来源** | **用户提供** | 个性化温度 + 避免 AI 生成不稳定 + 版权清晰 | `ADR-004` |
+| 画风实现 | Toon Shader 模拟 2D 手绘 | 参考罗小黑"无影平涂"风格，`MeshToonMaterial` + 3 阶 `gradientMap` 最接近手绘"平涂"质感 | `ADR-002` |
+| **画风描边实现** | **drei `<Outlines screenspace>`** | 统一描边方案；当前 SignBoard canvas wobble "看着像"但远景树丛/篝火/小鸟无描边 | `ADR-002` |
+| 状态管理 | React Context | 状态量少（scene + folders + selectedFolder + bgImage），不需要 Redux/Zustand | — |
+| **场景切换时序** | **drei `<PerspectiveCamera>` + maath `damp3` 阻尼过渡（1.5-2.0s）** | 替代 MVP 阶段的"瞬时切换"；`ADR-002` 任务 2.16 | `ADR-002` |
+| 搜索实现 | chrome.search.query | 触发浏览器默认搜索引擎，不自己实现搜索 | — |
+| 书签读取 | 仅一级文件夹 + 直接子书签 | 扁平化，避免嵌套复杂度 | — |
+| 构建工具 | Vite 8.0 + @crxjs/vite-plugin 2.4 | 一键打包扩展，HMR 支持；build ~280ms 满足 4.5 首帧 < 500ms | `ADR-002` |
+| 无路由库 | state 驱动场景切换 | 只有两个场景，用 `scene` 状态切换比引入 React Router 更简单 | — |
+| **postprocessing** | **暂缓（第二批）** | MVP 不需要；待 Bayer 颜色量化或 Bloom 需求出现 | `ADR-002` |
+| **TypeScript 迁移** | **暂缓** | 当前 28 测试通过；TS 改造 ROI 低 | `ADR-002` |
 
 ### 6.2 Chrome 扩展约束
 
@@ -405,9 +518,15 @@ doc/
 ├── spec.md            ← 规格文档（GWT 场景、验收标准）
 ├── art-style.md       ← 画风参考（罗小黑风格分析 + 本项目设计指导）
 ├── scene-design.md    ← 场景画面设计（构图、比例、相机、元素布局）
+├── decisions/         ← 决策记录（ADR）✨ 2026-06-05 新增
+│   ├── ADR-001-chunk-size-warning.md
+│   ├── ADR-002-tech-stack-reselection.md
+│   ├── ADR-003-prioritize-scene1-to-reference.md
+│   └── ADR-004-scene1-photo-plus-3d-overlay.md
 └── discussions/       ← 讨论记录
     ├── 001-animation-basics.md
-    └── 002-forest-extension-analysis.md
+    ├── 002-forest-extension-analysis.md
+    └── 003-tech-stack-reselection.md   ← ADR-002 来源
 
 agents/
 ├── main-agent.md      ← 主控 Agent 设计 【待编写】
@@ -427,8 +546,11 @@ art-style.md ─────┤      ← 画面效果的验收标准
 design.md ────────┘      ← 架构和流程约束
                   │
 agents/*.md ──────┘      ← Agent 之间的协作规则
+                  │
+decisions/ADR ───┘       ← 关键技术决策（含决策背景 / 备选 / 后果）
 ```
 
 - **用户** 主要阅读 demand.md + art-style.md（确认产品和画风方向）
 - **Agent** 主要阅读 spec.md + design.md + agents/*.md（知道做什么和怎么做）
+- **新决策** 必须先写 `decisions/ADR-NNN-*.md` 再同步到 design.md / spec.md
 - **spec.md 是唯一的验收标准**，所有 Agent 以它为基准
