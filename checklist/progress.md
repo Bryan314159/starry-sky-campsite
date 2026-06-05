@@ -9,6 +9,8 @@
 | 2.10 | 场景画面设计文档 + 构图调整 | ✅ | 三分法构图，doc/scene-design.md |
 | 0.8 | art-agent 文生图 Agent prompt 编写 | ✅ | agents/art-agent.md，基于 art-style.md 提炼可复用的 T2I Prompt 模板（含 STYLE_PREFIX / PALETTE_WARM+COLD / NEGATIVE_PROMPT / 自检清单） |
 | 2.11 | 场景一画面升级（参考图驱动） | ✅ | 见下方明细 |
+| 2.12 | 场景一氛围感深化（细节追加） | ✅ | 见下方明细 |
+| 2.13 | 灵感研究 — 同类项目调研 | ✅ | doc/inspiration-research.md，3 维度调研 + 28 个参考项目 + 8 个 ROI 排序的技法 |
 | 2.11 | 场景一画面升级（参考图驱动） | ✅ | 见下方明细 |
 
 ---
@@ -40,6 +42,8 @@
 | 2.9 | 点击指示牌切换场景 | ✅ | 2026-06-03 |
 | 2.10 | 场景画面设计文档 + 构图调整 | ✅ | 2026-06-04，三分法构图，doc/scene-design.md |
 | 2.11 | 场景一画面升级（参考图驱动） | ✅ | 2026-06-05，新增 BackgroundLayers + Campfire，升级 SkyDome/Ground/Path/Signpost/SignBoard，Campsite.jsx 集成 |
+| 2.12 | 场景一氛围感深化（细节追加） | ✅ | 2026-06-05，详见下方任务 2.12 |
+| 2.13 | 灵感研究 — 同类项目调研 | ✅ | 2026-06-05，详见下方任务 2.13 |
 
 ## 阶段 1：项目骨架
 
@@ -126,6 +130,74 @@
 - ✅ `npm run build` 通过（build 270ms，gz 301KB）
 - ✅ `npm test` 28 个测试全过
 
+### 任务 2.12 详细说明 — 场景一氛围感深化
+
+**目标：** 在 2.11 氛围感基础上追加 9 项细节，进一步贴近参考图与 art-style.md §6.2「万物有灵的诗意」。
+
+**新增文件 (6)：**
+
+| 文件 | 内容 |
+|------|------|
+| `src/components/Fireflies.jsx` | 14 个萤火虫/余烬光点（暖金 sphere + 加性 blend halo sprite）+ 独立正弦漂移 + 闪烁呼吸 |
+| `src/components/SignpostBird.jsx` | 路牌柱顶手绘小鸟 silhouette（canvas 纹理 + 双十字 plane + 翅膀拍打动画） |
+| `src/components/ForegroundFlowers.jsx` | 24 朵白色雏菊 + 14 簇黄色毛茛（3D plane 花瓣 + 球形花心），seeded 散布在路两侧 |
+| `src/components/GrassTufts.jsx` | 140 株低面草丛（InstancedMesh + 3-blade ShapeGeometry）+ 风吹摆动 |
+| `src/components/SkyBirds.jsx` | 4 只远景飞鸟 V 形剪影（canvas "M" 纹理 + 横向漂移 + 翅膀拍打缩放） |
+| `src/components/ScorchMark.jsx` | 篝火下方地面灼痕（径向渐变 + 内圈暖色 hint） |
+
+**修改文件 (3)：**
+
+| 文件 | 改动 |
+|------|------|
+| `src/components/Path.jsx` | 加曲线中心线 `centerlineOffset(t)` — 中段偏左 0.7m，末端偏右 0.3m，形成自然山路弯曲 |
+| `src/components/BackgroundLayers.jsx` | MistBand 加 `useFrame` 漂移：`map.offset.x = t * 0.006` |
+| `src/components/Campfire.jsx` | 新增 `<pointLight intensity={2.2} distance={4.5} color="#ffb168" />` 暖光晕染 |
+| `src/components/Signpost.jsx` | Pole 集成 `<SignpostBird />` |
+| `src/scenes/Campsite.jsx` | 集成全部 8 个新组件，调节光强保持整体平衡 |
+
+**画风深化对照：**
+
+| art-style.md 章节 | 体现 |
+|---|------|
+| §3.1 粗圆描边 | ✅ 飞鸟/小鸟的 silhouette 边缘自然圆润 |
+| §6.2 万物有灵的诗意 | ✅ 萤火虫飘动 / 草丛摆动 / 雾带漂移 / 鸟翅拍动 / 火焰呼吸 / 鸟眨眼 |
+| §7.1 暖色傍晚 + 木纹 | ✅ 篝火 pointLight 暖色晕染 |
+| §5.1 层次丰富 | ✅ 草丛 + 野花增加前景层次 |
+
+**验证：**
+- ✅ `npm run build` 通过（build 239ms，gz 303.75KB）
+- ✅ `npm test` 28 个测试全过
+- ✅ `npx vite` dev server 启动正常，无 runtime 错误
+
+### 任务 2.13 详细说明 — 灵感研究 · 同类项目调研
+
+**目标：** 在画面升级后开拓视野，研究其他人在三类项目上的实现方式，整理可借鉴的范式与技法清单。
+
+**3 维度调研（3 个 Explore 代理并行）：**
+
+| 维度 | 调研对象数 | 关键产出 |
+|------|:---:|------|
+| A. 艺术化 / 3D new-tab 扩展 | 6 | Tabliss / Momentum / Bonjourr / Bruno Simon / Active Theory / Awwwards |
+| B. 书签 / 收藏夹可视化 | 12 | Are.na / nightTab / Homer / Heimdall / Raindrop.io / Pocket / BookmarksMap / TimeMap / HistoryMap / Lost at Night / Session Buddy / Flame |
+| C. Three.js / R3F 手绘风技法 | 10 | MeshToonMaterial+gradientMap / drei `<Outlines>` / OutlinePass / 域扭曲 fBm / 颜色量化 + Bayer dither / canvas NearestFilter / Octopath HD-2D / billboard impostor / inverted-hull 等 |
+
+**综合产出：**
+
+| 文档章节 | 内容 |
+|---------|------|
+| 第五节 — 借鉴清单 | 8 个 ROI 排序的技法 + 3 批落地建议 |
+| 第五节 · 1 | 同类项目范式借鉴（落到产品 / 文案 / 心智） |
+| 第六节 | 3 个待用户决策的设计问题（星空平等 vs 频次 / 猫角色 / 夜云） |
+| 第七节 | 28 个参考链接汇总 |
+| 第八节 | 指向原始研究文档的指针 |
+
+**改动文件清单（1 个新增）：**
+- `doc/inspiration-research.md` — 完整研究综合报告（~400 行）
+
+**用户决策：**
+- ✅ 写入 doc/ 并 git commit
+- ✅ 本次不立刻实施任何技法（留作未来灵感库）
+
 ## 阶段 5：交付
 
 | # | 任务 | 状态 | 备注 |
@@ -147,8 +219,8 @@
 
 ## 统计
 
-- **总任务数：** 38
-- **已完成：** 12
+- **总任务数：** 40
+- **已完成：** 14
 - **进行中：** 0
 - **待开始：** 26
-- **完成率：** 81.6%
+- **完成率：** 82.5%
