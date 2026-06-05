@@ -52,7 +52,14 @@ Per [demand.md](doc/demand.md#七功能范围):
 
 ## Progress Tracking
 
-- **所有任务必须在 `checklist/progress.md` 中实时更新状态。**
-- 完成任务后，先更新 `checklist/progress.md` 中对应任务的标志为 ✅，再提交 git。
-- 新增任务时，在对应的开发阶段下追加条目。
-- `checklist/progress.md` 是项目进度的唯一真相源。
+- **`checklist/progress.md` 是项目进度的索引 + 状态表**（每个阶段一张表，含任务状态 / 备注 / 阶段文档链接）。
+- **每个阶段有独立详细文档**：`checklist/stages/stage-N-<name>.md`
+  - 文档结构：阶段概述 → 任务清单（每个任务的目标 / 改动 / 验证 / 备注）→ 阶段产出 → 验证 → 备注
+  - 重大任务（如 2.11 / 2.12 / 2.13）在阶段文档内展开详细描述
+- 完成任务后：
+  1. 更新 `checklist/progress.md` 表格中对应行的标志为 ✅
+  2. 同步更新 `checklist/stages/stage-N-<name>.md` 内任务详情（实际改动 / 验证 / 关联）
+  3. 提交 git
+- 新增任务时：在 `checklist/progress.md` 表格追加行 + 在 `checklist/stages/stage-N-<name>.md` 补充
+- 状态说明：✅ 已完成 / 🔄 进行中 / ⬜ 待开始 / ⏸️ 暂停 / ❌ 已取消
+- `checklist/progress.md` + `checklist/stages/` 共同构成项目进度的"唯一真相源"。
