@@ -5,12 +5,41 @@ import { TOON_GRADIENT_MAP } from '../utils/toonGradientMap';
 import * as THREE from 'three';
 
 /**
- * Hand-painted signboard texture.
+ * SignBoard — 3D 浮层上的"指示牌"。
  *
- * - Cream wood base with subtle horizontal grain streaks
- * - Wobble border (hand-drawn feel, not vector-perfect)
- * - Handwritten Chinese characters in dark walnut ink
- * - Two small "nail dots" on each side
+ * 任务 2.17 评估：drei `<Text>` vs 当前 CanvasTexture
+ * ─────────────────────────────────────────────────────
+ * 当前实现：CanvasTexture（手绘木纹底 + wobble 边框 + 墨晕中文字 + 钉子点）
+ * 备选实现：drei `<Text>` + CJK CDN 字体
+ *
+ * 决策（2026-06-08）：**保留 CanvasTexture**
+ *   1. 0 外部资源原则 — 不引入 CDN CJK 字体 URL
+ *   2. 首帧 < 500ms 硬性指标 — CDN 字体加载抖动会拖慢首帧
+ *   3. 现有 CanvasTexture 已有 wobble border + 钉子 + 墨晕，与 art-style.md §7.4
+ *      "手工感" 对齐
+ *   4. 新架构（静态图 + 3D 浮层）下，平贴图与图上前景元素更协调
+ *   5. CJK 字体文件大（~1-3MB），troika-three-text 间接依赖有 bundle 成本
+ *
+ * 未来迁移路径（若决定换 drei Text）：
+ *   ```jsx
+ *   import { Text } from '@react-three/drei';
+ *
+ *   <Text
+ *     font="https://cdn.jsdelivr.net/npm/@fontsource/zcool-kuaile@5/files/zcool-kuaile-chinese-simplified-400-normal.woff"
+ *     fontSize={0.18}
+ *     color="#3b2a13"
+ *     anchorX="center"
+ *     anchorY="middle"
+ *     maxWidth={1.0}
+ *     outlineWidth={0.005}
+ *     outlineColor="#2a1f15"
+ *   >
+ *     {folder.name}
+ *   </Text>
+ *   ```
+ *   注意：必须先确认 CDN 字体加载完成后才显示文字，否则 fallback 字体难看。
+ *
+ * 任务：2.17（评估决策 — 保留 CanvasTexture）
  */
 function createTextTexture(text) {
   const canvas = document.createElement('canvas');
