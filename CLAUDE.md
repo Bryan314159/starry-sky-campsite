@@ -79,6 +79,52 @@ Per [demand.md](doc/demand.md#七功能范围):
 - **每个任务完成后必须提交 git commit**，不允许积累多个任务后批量提交。
 - **每次 git commit 前必须经过用户确认**，用户在确认前不得执行提交。确认方式：向用户展示待提交的文件清单和 commit message，等待用户明确同意后再执行 `git commit`。
 
+## Plan File Management
+
+所有 plan mode 产出的 plan 文档，**先存入 `doc/plan/new/`**；当 plan 中包含的任务**全部完成**后，**移入 `doc/plan/done/`**。
+
+### 目录约定
+
+```
+doc/plan/
+├── new/               ← 活跃 plan（任务进行中）
+│   └── <plan-name>.md
+└── done/              ← 已完成 plan（任务全部 ✅）
+    └── <plan-name>.md
+```
+
+### 命名约定
+
+- 文件名：`kebab-case-<topic>.md`
+- 例：`adr-004-scene1-photo-plus-3d-overlay.md`（避免 `-partitioned-deer` 这类自动随机后缀）
+- 命名应能体现 plan 覆盖的 topic（如 `scene1` / `popup-选图` / `storage-persistence`）
+
+### 生命周期
+
+```
+plan mode 产出 plan 草案
+        ↓ 用户确认（ExitPlanMode 批准）
+进入 doc/plan/new/，状态字段 = "活跃"
+        ↓
+每完成一个子任务 → 在 plan 内的"实际改动"小节追加条目
+        ↓
+所有子任务完成（checklist 全 ✅）
+        ↓
+移入 doc/plan/done/，状态字段 = "已完成"
+```
+
+### 与 Session-level plan 的关系
+
+- `~/.claude/plans/` 是**会话临时文件**，跨 session 易丢失
+- `doc/plan/` 是**项目内归档**，进入 git 跟踪，作为项目知识的一部分
+- 凡是 plan mode 产出的 plan，**必须**同步归档到 `doc/plan/new/`（不仅仅是放进 `~/.claude/plans/`）
+
+### 与 `checklist/progress.md` 的关系
+
+- `checklist/progress.md` 跟踪**任务状态**（✅ / 🔄 / ⬜）
+- `doc/plan/new/` 跟踪**设计决策与计划**（为什么这么做 / 怎么做 / 不做什么）
+- 两者互补：plan 决定"做什么"，checklist 决定"做完没"
+
 ## Progress Tracking
 
 - **`checklist/progress.md` 是项目进度的索引 + 状态表**（每个阶段一张表，含任务状态 / 备注 / 阶段文档链接）。
