@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { Outlines } from '@react-three/drei';
+import { TOON_GRADIENT_MAP } from '../utils/toonGradientMap';
 import * as THREE from 'three';
 import SignBoard from './SignBoard';
 import SignpostBird from './SignpostBird';
@@ -111,7 +112,7 @@ function SignpostPole() {
       {/* Main pole */}
       <mesh position={[0, 0, 0]} castShadow raycast={() => null}>
         <cylinderGeometry args={[0.12, 0.16, 3.7, 10]} />
-        <meshToonMaterial map={woodMap} color="#b58560" />
+        <meshToonMaterial map={woodMap} gradientMap={TOON_GRADIENT_MAP} color="#b58560" />
         <Outlines
           thickness={4}
           color="#2a1f15"
@@ -125,7 +126,7 @@ function SignpostPole() {
       {/* Small base flare for stability — hand-drawn "stake" feel */}
       <mesh position={[0, -1.78, 0]} castShadow raycast={() => null}>
         <cylinderGeometry args={[0.18, 0.22, 0.18, 10]} />
-        <meshToonMaterial color="#7a553a" />
+        <meshToonMaterial color="#7a553a" gradientMap={TOON_GRADIENT_MAP} />
         <Outlines
           thickness={4}
           color="#2a1f15"
@@ -139,7 +140,7 @@ function SignpostPole() {
       {/* Cap on top — little wooden knob (replaced by bird) */}
       <mesh position={[0, 1.9, 0]} castShadow raycast={() => null}>
         <sphereGeometry args={[0.16, 12, 10]} />
-        <meshToonMaterial color="#8b6238" />
+        <meshToonMaterial color="#8b6238" gradientMap={TOON_GRADIENT_MAP} />
         <Outlines
           thickness={4}
           color="#2a1f15"

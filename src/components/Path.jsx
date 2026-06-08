@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { Outlines } from '@react-three/drei';
+import { TOON_GRADIENT_MAP } from '../utils/toonGradientMap';
 import { useAppContext } from '../context/AppContext';
 import * as THREE from 'three';
 
@@ -158,7 +159,7 @@ export default function Path({ onClick }) {
             : undefined
         }
       >
-        <meshToonMaterial map={dirtMap} color="#c4a46c" />
+        <meshToonMaterial map={dirtMap} color="#c4a46c" gradientMap={TOON_GRADIENT_MAP} />
         <Outlines
           thickness={3}
           color="#5c4530"

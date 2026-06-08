@@ -1,6 +1,7 @@
 import { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Outlines } from '@react-three/drei';
+import { TOON_GRADIENT_MAP } from '../utils/toonGradientMap';
 import * as THREE from 'three';
 
 /**
@@ -143,7 +144,7 @@ export default function SignBoard({ folder, position, onClick }) {
       }}
     >
       <planeGeometry args={[1.2, 0.28]} />
-      <meshToonMaterial map={texture} side={THREE.DoubleSide} />
+      <meshToonMaterial map={texture} gradientMap={TOON_GRADIENT_MAP} side={THREE.DoubleSide} />
       <Outlines
         thickness={4}
         color="#2a1f15"
