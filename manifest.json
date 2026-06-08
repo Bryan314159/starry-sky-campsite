@@ -6,7 +6,11 @@
   "chrome_url_overrides": {
     "newtab": "newtab.html"
   },
-  "permissions": ["bookmarks", "search"],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "星空营地 · 设置"
+  },
+  "permissions": ["bookmarks", "search", "storage"],
   "icons": {
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",

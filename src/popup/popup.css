@@ -1,0 +1,118 @@
+/* popup.css — scoped to popup window only */
+:root {
+  --bg: #2a2118;
+  --bg-card: #3a2f24;
+  --bg-card-hover: #4a3d30;
+  --bg-card-active: #5a4a3a;
+  --text: #f5e6d3;
+  --text-dim: #b8a890;
+  --border: #5a4a3a;
+  --accent: #ffb168;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  width: 280px;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'PingFang SC', 'Microsoft YaHei', 'SimHei', sans-serif;
+  font-size: 14px;
+  padding: 12px;
+}
+
+.popup-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.popup-title {
+  font-size: 14px;
+  font-weight: 600;
+  flex: 1;
+}
+
+.popup-hint {
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.image-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.image-card {
+  display: flex;
+  gap: 10px;
+  padding: 8px;
+  background: var(--bg-card);
+  border: 2px solid transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.image-card:hover {
+  background: var(--bg-card-hover);
+}
+
+.image-card.active {
+  background: var(--bg-card-active);
+  border-color: var(--accent);
+}
+
+.image-thumb {
+  width: 64px;
+  height: 40px;
+  border-radius: 4px;
+  object-fit: cover;
+  background: var(--bg);
+  flex-shrink: 0;
+}
+
+.image-info {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  flex: 1;
+  min-width: 0;
+}
+
+.image-name {
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.image-desc {
+  font-size: 11px;
+  color: var(--text-dim);
+  margin-top: 2px;
+}
+
+.image-check {
+  display: flex;
+  align-items: center;
+  color: var(--accent);
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.popup-empty {
+  text-align: center;
+  padding: 20px;
+  color: var(--text-dim);
+  font-size: 12px;
+}
