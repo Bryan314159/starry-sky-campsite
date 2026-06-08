@@ -28,6 +28,35 @@ Two scenes managed by React state — no routing library needed:
 
 **Empty state:** When the user has no bookmarks, signposts display pre-designed placeholder text.
 
+## Code Intelligence (codegraph)
+
+本项目使用 **codegraph MCP** 作为代码检索与架构问答的首选入口（`.codegraph/` 索引已构建：35 文件 / 231 节点 / 383 边，毫秒级响应）。**不再**把"X 怎么工作 / 在哪 / 调用谁 / 架构 / 流程"类问题委派给会读文件的 Explore 子 Agent —— 那会重复 codegraph 已做过的索引扫描、消耗更多 token 且结果质量更差。
+
+### 工具选型矩阵
+
+| 意图 | 用什么 tool | 说明 |
+|------|------------|------|
+| "X 怎么工作" / 架构 / 调查一个区域 / bug 调查 | `codegraph_explore` | **首选 / 第一调用**。自然语言问题或一袋符号名，一个 capped 调用就返回分组好的原代码。多数情况下是**唯一**需要的 codegraph 调用 |
+| "X 怎么到 Y" / 调用流程 / 跨多符号的路径 | `codegraph_explore` | 命名流程上跨越的符号即可，会回溯动态分发链路（React 重渲染、JSX children、callback） |
+| "名字叫 X 的符号在哪" / 位置 | `codegraph_search` | 仅返回位置，不带代码 |
+| "谁调用 X" | `codegraph_callers` | |
+| "X 调用了谁" | `codegraph_callees` | |
+| "改 X 会影响什么" | `codegraph_impact` | 重构前必跑 |
+| 项目结构概览 | `codegraph_files` | 比 Glob 快 |
+| 索引健康检查 | `codegraph_status` | 仅调试时用 |
+
+### 回退规则
+
+- codegraph 没说清的**单个具体细节**（如某个常量值、某行代码上下文）→ 退回 `Read`
+- 大段正则 / 多文件 grep 模式匹配 → 退回 `Grep`
+- **不要**自己跑 Read + Grep 循环做"架构调研"——那就是 Explore Agent 干的活，codegraph 已经替我们做完了
+
+### 索引维护
+
+- 项目根目录有 `.codegraph/`，文件改动通过 watcher 自动同步（约 1s 延迟）
+- 手动重建：`codegraph sync`（增量）/ `codegraph init`（全量，会覆盖）
+- `codegraph init` 当前由 auto mode 拦截，需用户在终端用 `! codegraph init` 手动执行
+
 ## MVP Scope
 
 Per [demand.md](doc/demand.md#七功能范围):
