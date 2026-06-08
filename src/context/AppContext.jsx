@@ -8,6 +8,9 @@ const initialState = {
   selectedFolder: null,
   bookmarksLoaded: false,
   hasBookmarks: false,
+  // Task 2.22 — scene 1 background image (ADR-004 方案 C)
+  // Task 2.24 — popup image picker writes to this + chrome.storage.local
+  bgImage: '/scenes/campsite-bg.webp',
 };
 
 function reducer(state, action) {
@@ -38,6 +41,12 @@ function reducer(state, action) {
         scene: 'campsite',
         selectedFolder: null,
       };
+    }
+
+    case 'SET_BG_IMAGE': {
+      const url = action.payload;
+      if (typeof url !== 'string' || !url) return state;
+      return { ...state, bgImage: url };
     }
 
     default:

@@ -2,10 +2,15 @@ import { useMemo } from 'react';
 import * as THREE from 'three';
 
 /**
- * Three-stop vertical gradient sky for the campsite scene.
- * - top:    soft peach (upper atmosphere at dusk)
- * - middle: cream / champagne (horizon haze)
- * - bottom: muted blue-gray (low atmosphere / distant water mist)
+ * Three-stop vertical gradient sky — NIGHT ONLY (scene 2).
+ *
+ * Task 2.22 — 拆分为 night-only 变体
+ *   - day 变体已删除（场景一改用 BackgroundImage 静态图）
+ *   - night 变体仍被 StarrySky.jsx 引用
+ *
+ * Top:    deep navy (high atmosphere)
+ * Middle: indigo (mid sky)
+ * Bottom: muted purple-blue (horizon glow)
  *
  * Uses a ShaderMaterial so the gradient is smooth and per-vertex free
  * (cheap on draw calls). Slight time-varying noise adds watercolor
@@ -40,7 +45,7 @@ const FRAGMENT = /* glsl */ `
     f = f * f * (3.0 - 2.0 * f);
     return mix(
       mix(hash(i), hash(i + vec2(1.0, 0.0)), f.x),
-      mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), f.x),
+      mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(0.0, 1.0)), f.x),
       f.y
     );
   }
@@ -66,27 +71,18 @@ const FRAGMENT = /* glsl */ `
 `;
 
 const COLORS = {
-  day: {
-    top: new THREE.Color('#f3c69a'),  // 浅橙（高空）
-    mid: new THREE.Color('#f7e3c4'),  // 奶油米色（地平线晕）
-    bot: new THREE.Color('#bcc7d1'),  // 柔蓝灰（低空）
-  },
-  night: {
-    top: new THREE.Color('#0a0d2e'),
-    mid: new THREE.Color('#1a1f4e'),
-    bot: new THREE.Color('#2a2a5e'),
-  },
+  top: new THREE.Color('#0a0d2e'),
+  mid: new THREE.Color('#1a1f4e'),
+  bot: new THREE.Color('#2a2a5e'),
 };
 
-export default function SkyDome({ variant = 'day' }) {
-  const colors = COLORS[variant] || COLORS.day;
-
+export default function SkyDome() {
   const material = useMemo(() => {
     return new THREE.ShaderMaterial({
       uniforms: {
-        uColorTop: { value: colors.top },
-        uColorMid: { value: colors.mid },
-        uColorBot: { value: colors.bot },
+        uColorTop: { value: COLORS.top },
+        uColorMid: { value: COLORS.mid },
+        uColorBot: { value: COLORS.bot },
         uTime: { value: 0 },
       },
       vertexShader: VERTEX,
@@ -94,7 +90,7 @@ export default function SkyDome({ variant = 'day' }) {
       side: THREE.BackSide,
       depthWrite: false,
     });
-  }, [colors.top, colors.mid, colors.bot]);
+  }, []);
 
   return (
     <mesh raycast={() => null} material={material}>
