@@ -13,6 +13,34 @@ import * as THREE from 'three';
  *
  * Toon-friendly: spheres use MeshBasicMaterial (no shading),
  * halo sprites are translucent additive blends.
+ *
+ * 任务 2.18 评估：drei `<Sparkles>` vs 当前自定义实现
+ * ─────────────────────────────────────────────────────
+ * 备选方案：drei `<Sparkles>` (一行替换 ~130 行)
+ *
+ * 决策（2026-06-08）：**保留自定义**
+ *   1. 失去"暖金 + 闪烁"手作感 —— drei Sparkles 是点状光斑，无 per-particle
+ *      flicker / 软 halo 渐变
+ *   2. art-style.md §6.2 "万物有灵的诗意" 强调手工细节
+ *   3. 不加 Outlines —— 萤火虫是"光点"，描边会让它们变"硬边小石头"
+ *   4. 不改 toon 化 —— meshBasicMaterial 是萤火虫"自发光"的正确选择
+ *      (toon 化反而会让光点失去"光"的感觉)
+ *   5. 性能：14 个粒子 < drei Sparkles 内部默认 100 个
+ *
+ * 未来若需替换为 drei Sparkles：
+ *   ```jsx
+ *   import { Sparkles } from '@react-three/drei';
+ *   <Sparkles
+ *     count={14}
+ *     scale={[9, 2.2, 6.5]}
+ *     position={[0, 1.5, -0.5]}
+ *     size={4}
+ *     speed={0.3}
+ *     color="#fff1c2"
+ *   />
+ *   ```
+ *
+ * 任务：2.18（评估决策 — 保留自定义）
  */
 const COUNT = 14;
 const RANGE_X = [-4.5, 4.5];
