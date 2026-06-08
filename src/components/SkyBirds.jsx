@@ -1,6 +1,7 @@
 import { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Outlines } from '@react-three/drei';
+import { SCENE1_CALIBRATION } from '../config/scene1Calibration';
 import * as THREE from 'three';
 
 /**
@@ -46,19 +47,22 @@ function seededRandom(seed) {
   };
 }
 
-const COUNT = 4;
+const { count: COUNT, yRange, zRange, xRange, speed: BASE_SPEED, seed } = SCENE1_CALIBRATION.skyBirds;
 
 export default function SkyBirds() {
   const refs = useRef([]);
   const tex = useMemo(() => createBirdSilhouetteTexture(), []);
 
   const birds = useMemo(() => {
-    const rand = seededRandom(314159);
+    const rand = seededRandom(seed);
+    const xSpan = xRange[1] - xRange[0];
+    const ySpan = yRange[1] - yRange[0];
+    const zSpan = zRange[1] - zRange[0];
     return Array.from({ length: COUNT }, (_, i) => ({
-      x: -6 + i * 3 + rand() * 1.5,
-      y: 3.0 + rand() * 1.4,
-      z: -8 - rand() * 2,
-      speed: 0.15 + rand() * 0.2,
+      x: xRange[0] + (i * xSpan) / COUNT + rand() * 1.5,
+      y: yRange[0] + rand() * ySpan,
+      z: zRange[0] + rand() * zSpan,
+      speed: BASE_SPEED + rand() * 0.2,
       flapPhase: rand() * Math.PI * 2,
       flapSpeed: 4 + rand() * 3,
       scale: 0.45 + rand() * 0.35,

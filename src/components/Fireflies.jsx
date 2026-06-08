@@ -1,5 +1,6 @@
 import { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
+import { SCENE1_CALIBRATION } from '../config/scene1Calibration';
 import * as THREE from 'three';
 
 /**
@@ -42,10 +43,21 @@ import * as THREE from 'three';
  *
  * 任务：2.18（评估决策 — 保留自定义）
  */
-const COUNT = 14;
-const RANGE_X = [-4.5, 4.5];
-const RANGE_Y = [0.4, 2.6];
-const RANGE_Z = [-4, 2.5];
+const { count: COUNT, range: RANGE, seed: SEED } = SCENE1_CALIBRATION.fireflies;
+
+/**
+ * Mulberry32 — fast, deterministic 32-bit PRNG. Replaces Math.random()
+ * so particle positions stay stable across re-renders (no flicker).
+ */
+function mulberry32(seed) {
+  let t = seed >>> 0;
+  return () => {
+    t = (t + 0x6d2b79f5) >>> 0;
+    let r = Math.imul(t ^ (t >>> 15), 1 | t);
+    r = (r + Math.imul(r ^ (r >>> 7), 61 | r)) ^ r;
+    return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
+  };
+}
 
 function makeHaloTexture() {
   const size = 128;
@@ -65,26 +77,27 @@ function makeHaloTexture() {
 }
 
 function randomSeedParticles() {
+  const rand = mulberry32(SEED);
   return Array.from({ length: COUNT }, () => ({
     base: new THREE.Vector3(
-      RANGE_X[0] + Math.random() * (RANGE_X[1] - RANGE_X[0]),
-      RANGE_Y[0] + Math.random() * (RANGE_Y[1] - RANGE_Y[0]),
-      RANGE_Z[0] + Math.random() * (RANGE_Z[1] - RANGE_Z[0]),
+      RANGE.x[0] + rand() * (RANGE.x[1] - RANGE.x[0]),
+      RANGE.y[0] + rand() * (RANGE.y[1] - RANGE.y[0]),
+      RANGE.z[0] + rand() * (RANGE.z[1] - RANGE.z[0]),
     ),
     // Per-particle drift amplitudes + phases
     amp: new THREE.Vector3(
-      0.4 + Math.random() * 0.6,
-      0.3 + Math.random() * 0.5,
-      0.3 + Math.random() * 0.6,
+      0.4 + rand() * 0.6,
+      0.3 + rand() * 0.5,
+      0.3 + rand() * 0.6,
     ),
     phase: new THREE.Vector3(
-      Math.random() * Math.PI * 2,
-      Math.random() * Math.PI * 2,
-      Math.random() * Math.PI * 2,
+      rand() * Math.PI * 2,
+      rand() * Math.PI * 2,
+      rand() * Math.PI * 2,
     ),
-    flickerPhase: Math.random() * Math.PI * 2,
-    flickerSpeed: 1.2 + Math.random() * 1.6,
-    size: 0.04 + Math.random() * 0.04,
+    flickerPhase: rand() * Math.PI * 2,
+    flickerSpeed: 1.2 + rand() * 1.6,
+    size: 0.04 + rand() * 0.04,
   }));
 }
 

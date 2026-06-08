@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { Outlines } from '@react-three/drei';
 import { TOON_GRADIENT_MAP } from '../utils/toonGradientMap';
+import { SCENE1_CALIBRATION } from '../config/scene1Calibration';
 import { useAppContext } from '../context/AppContext';
 import * as THREE from 'three';
 
@@ -12,31 +13,22 @@ import * as THREE from 'three';
  *
  * In scene 2 the path is still the return-to-campsite trigger; the
  * click target is widened with an invisible rectangle on top of the shape.
+ *
+ * Task 2.23 — calibrated to follow the visible dirt path in
+ * campsite-bg.webp. Source of truth: SCENE1_CALIBRATION.path.
  */
 function buildPathShape() {
   const shape = new THREE.Shape();
-  // 18 control points along the path; left and right edges jittered,
-  // centerline follows a gentle curve (Bezier-ish).
-  const segments = 18;
-  const length = 15;
-  const startZ = 4.0;
-  const startHalfWidth = 1.0;
-  const endHalfWidth = 0.18;
+  const cfg = SCENE1_CALIBRATION.path;
+  const { segments, length, startZ, startHalfWidth, endHalfWidth, centerlineOffset } = cfg;
 
-  // Random jitter (seeded-feel via fixed offsets)
+  // Random jitter (seeded-feel via fixed offsets — not Math.random()
+  // to keep shape stable across re-renders)
   const jitter = [
     0.04, -0.05, 0.06, -0.03, 0.05, -0.07, 0.03, -0.04,
     0.06, -0.05, 0.04, -0.06, 0.05, -0.04, 0.07, -0.03,
     0.05, -0.04,
   ];
-
-  // Centerline curve: gentle sway to the left, then back.
-  // At t=0 → 0, t=0.5 → -0.7 (left), t=1 → 0.3
-  const centerlineOffset = (t) => {
-    const a = -0.7 * Math.sin(t * Math.PI);
-    const b = 0.3 * t;
-    return a + b;
-  };
 
   // Start at front-left
   shape.moveTo(-startHalfWidth, startZ);

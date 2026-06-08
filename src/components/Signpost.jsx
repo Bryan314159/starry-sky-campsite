@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { Outlines } from '@react-three/drei';
 import { TOON_GRADIENT_MAP } from '../utils/toonGradientMap';
+import { SCENE1_CALIBRATION } from '../config/scene1Calibration';
 import * as THREE from 'three';
 import SignBoard from './SignBoard';
 import SignpostBird from './SignpostBird';
@@ -164,10 +165,11 @@ export default function Signpost({ folders, onSelectFolder }) {
     '然后回到这里',
   ];
 
-  // Group position tuned so the pole sits at the right-third intersection
-  // (matches scene-design.md "right-third golden ratio" rule and the
-  // reference image where the signpost dominates the right ~30% of frame)
-  const GROUP_POS = [1.6, 1.78, -0.2];
+  // Group position — calibrated to image visual anchors (Task 2.23).
+  // Source of truth: src/config/scene1Calibration.js → signpost.groupPosition
+  // Signpost sits at the right ~70% of the image, where the background
+  // is clean grass with no conflicting detail.
+  const GROUP_POS = SCENE1_CALIBRATION.signpost.groupPosition;
 
   if (!folders || folders.length === 0) {
     const empty = emptyMessages.map((msg, i) => ({ id: `empty-${i}`, name: msg }));

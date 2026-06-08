@@ -2,6 +2,7 @@ import { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Outlines } from '@react-three/drei';
 import { TOON_GRADIENT_MAP } from '../utils/toonGradientMap';
+import { SCENE1_CALIBRATION } from '../config/scene1Calibration';
 import * as THREE from 'three';
 
 /**
@@ -169,18 +170,22 @@ function Logs() {
 }
 
 export default function Campfire() {
+  // Position — calibrated to image visual anchors (Task 2.23).
+  // Source of truth: src/config/scene1Calibration.js → campfire.groupPosition
+  // Campfire sits at the left ~19% of the image, aligned with the red
+  // campfire scorch mark visible in the reference photo.
   return (
-    <group position={[0, 0, 1.5]}>
+    <group position={SCENE1_CALIBRATION.campfire.groupPosition}>
       <StoneRing />
       <Logs />
       <FlameCluster />
       {/* Warm fire-light — gently pulses with the flame breathing.
-          distance=4 limits the cast so the signpost doesn't go fully orange,
-          intensity=2.0 gives a visible warm wash on nearby ground/grass. */}
+          distance from calibration limits the cast so the signpost
+          doesn't go fully orange. */}
       <pointLight
         position={[0, 0.5, 0]}
         intensity={2.2}
-        distance={4.5}
+        distance={SCENE1_CALIBRATION.campfire.pointLightDistance}
         decay={1.6}
         color="#ffb168"
       />
