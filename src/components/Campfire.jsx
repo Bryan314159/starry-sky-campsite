@@ -1,5 +1,6 @@
 import { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
+import { Outlines } from '@react-three/drei';
 import * as THREE from 'three';
 
 /**
@@ -27,23 +28,55 @@ function FlameCluster() {
       <mesh position={[0, 0.15, 0]} raycast={() => null}>
         <coneGeometry args={[0.22, 0.55, 8]} />
         <meshToonMaterial color="#d96b2c" />
+        <Outlines
+          thickness={3}
+          color="#3b1810"
+          screenspace
+          opacity={1}
+          transparent={false}
+          angle={Math.PI}
+        />
       </mesh>
       {/* Mid flame — warm orange */}
       <mesh position={[0, 0.22, 0]} raycast={() => null}>
         <coneGeometry args={[0.16, 0.42, 8]} />
         <meshToonMaterial color="#e88a3c" />
+        <Outlines
+          thickness={3}
+          color="#3b1810"
+          screenspace
+          opacity={1}
+          transparent={false}
+          angle={Math.PI}
+        />
       </mesh>
       {/* Inner flame — pale yellow */}
       <mesh position={[0, 0.28, 0]} raycast={() => null}>
         <coneGeometry args={[0.10, 0.32, 8]} />
         <meshToonMaterial color="#f5d27a" />
+        <Outlines
+          thickness={3}
+          color="#3b1810"
+          screenspace
+          opacity={1}
+          transparent={false}
+          angle={Math.PI}
+        />
       </mesh>
       {/* Hottest core — near white */}
       <mesh position={[0, 0.32, 0]} raycast={() => null}>
         <coneGeometry args={[0.05, 0.18, 8]} />
         <meshToonMaterial color="#fbeec1" />
+        <Outlines
+          thickness={3}
+          color="#3b1810"
+          screenspace
+          opacity={1}
+          transparent={false}
+          angle={Math.PI}
+        />
       </mesh>
-      {/* Ember / glow halo at base */}
+      {/* Ember / glow halo at base — NO outline (it's a soft glow effect) */}
       <mesh position={[0, 0.05, 0]} raycast={() => null}>
         <sphereGeometry args={[0.28, 12, 8]} />
         <meshBasicMaterial
@@ -88,6 +121,14 @@ function StoneRing() {
         >
           <dodecahedronGeometry args={[1, 0]} />
           <meshToonMaterial color={new THREE.Color('#9a8e7a').multiplyScalar(s.shade)} />
+          <Outlines
+            thickness={3}
+            color="#1f1a14"
+            screenspace
+            opacity={1}
+            transparent={false}
+            angle={Math.PI}
+          />
         </mesh>
       ))}
     </group>
@@ -101,10 +142,26 @@ function Logs() {
       <mesh rotation={[0, 0.4, Math.PI / 2]} position={[0, 0, 0]}>
         <cylinderGeometry args={[0.04, 0.05, 0.5, 8]} />
         <meshToonMaterial color="#5b3a1f" />
+        <Outlines
+          thickness={3}
+          color="#1a0f08"
+          screenspace
+          opacity={1}
+          transparent={false}
+          angle={Math.PI}
+        />
       </mesh>
       <mesh rotation={[0, -0.6, Math.PI / 2]} position={[0.02, 0.04, 0]}>
         <cylinderGeometry args={[0.04, 0.05, 0.45, 8]} />
         <meshToonMaterial color="#4a2f1a" />
+        <Outlines
+          thickness={3}
+          color="#1a0f08"
+          screenspace
+          opacity={1}
+          transparent={false}
+          angle={Math.PI}
+        />
       </mesh>
     </group>
   );

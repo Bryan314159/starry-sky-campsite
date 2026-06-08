@@ -1,5 +1,6 @@
 import { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
+import { Outlines } from '@react-three/drei';
 import * as THREE from 'three';
 
 /**
@@ -97,6 +98,14 @@ export default function SkyBirds() {
             depthWrite={false}
             side={THREE.DoubleSide}
             opacity={0.55}
+          />
+          <Outlines
+            thickness={2}
+            color="#0d0905"
+            screenspace
+            opacity={1}
+            transparent
+            angle={Math.PI}
           />
         </mesh>
       ))}

@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { Outlines } from '@react-three/drei';
 import * as THREE from 'three';
 import SignBoard from './SignBoard';
 import SignpostBird from './SignpostBird';
@@ -111,18 +112,42 @@ function SignpostPole() {
       <mesh position={[0, 0, 0]} castShadow raycast={() => null}>
         <cylinderGeometry args={[0.12, 0.16, 3.7, 10]} />
         <meshToonMaterial map={woodMap} color="#b58560" />
+        <Outlines
+          thickness={4}
+          color="#2a1f15"
+          screenspace
+          opacity={1}
+          transparent={false}
+          angle={Math.PI}
+        />
       </mesh>
 
       {/* Small base flare for stability — hand-drawn "stake" feel */}
       <mesh position={[0, -1.78, 0]} castShadow raycast={() => null}>
         <cylinderGeometry args={[0.18, 0.22, 0.18, 10]} />
         <meshToonMaterial color="#7a553a" />
+        <Outlines
+          thickness={4}
+          color="#2a1f15"
+          screenspace
+          opacity={1}
+          transparent={false}
+          angle={Math.PI}
+        />
       </mesh>
 
       {/* Cap on top — little wooden knob (replaced by bird) */}
       <mesh position={[0, 1.9, 0]} castShadow raycast={() => null}>
         <sphereGeometry args={[0.16, 12, 10]} />
         <meshToonMaterial color="#8b6238" />
+        <Outlines
+          thickness={4}
+          color="#2a1f15"
+          screenspace
+          opacity={1}
+          transparent={false}
+          angle={Math.PI}
+        />
       </mesh>
 
       {/* Perched bird on top of the post — matches reference image detail */}

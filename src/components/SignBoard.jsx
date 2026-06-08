@@ -1,5 +1,6 @@
 import { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
+import { Outlines } from '@react-three/drei';
 import * as THREE from 'three';
 
 /**
@@ -143,6 +144,14 @@ export default function SignBoard({ folder, position, onClick }) {
     >
       <planeGeometry args={[1.2, 0.28]} />
       <meshToonMaterial map={texture} side={THREE.DoubleSide} />
+      <Outlines
+        thickness={4}
+        color="#2a1f15"
+        screenspace
+        opacity={1}
+        transparent={false}
+        angle={Math.PI}
+      />
     </mesh>
   );
 }

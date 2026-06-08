@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { Outlines } from '@react-three/drei';
 import { useAppContext } from '../context/AppContext';
 import * as THREE from 'three';
 
@@ -158,6 +159,14 @@ export default function Path({ onClick }) {
         }
       >
         <meshToonMaterial map={dirtMap} color="#c4a46c" />
+        <Outlines
+          thickness={3}
+          color="#5c4530"
+          screenspace
+          opacity={1}
+          transparent={false}
+          angle={Math.PI}
+        />
       </mesh>
     </group>
   );

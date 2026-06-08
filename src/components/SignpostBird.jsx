@@ -1,5 +1,6 @@
 import { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
+import { Outlines } from '@react-three/drei';
 import * as THREE from 'three';
 
 /**
@@ -125,6 +126,14 @@ export default function SignpostBird() {
           depthWrite={false}
           side={THREE.DoubleSide}
         />
+        <Outlines
+          thickness={2}
+          color="#0d0905"
+          screenspace
+          opacity={1}
+          transparent
+          angle={Math.PI}
+        />
       </mesh>
       {/* Cross-plane (perpendicular) so the bird reads from any angle */}
       <mesh rotation={[0, Math.PI / 2, 0]} raycast={() => null}>
@@ -135,6 +144,14 @@ export default function SignpostBird() {
           depthWrite={false}
           side={THREE.DoubleSide}
           opacity={0.65}
+        />
+        <Outlines
+          thickness={2}
+          color="#0d0905"
+          screenspace
+          opacity={1}
+          transparent
+          angle={Math.PI}
         />
       </mesh>
       {/* Wing — small flap */}
@@ -149,6 +166,14 @@ export default function SignpostBird() {
           transparent
           depthWrite={false}
           side={THREE.DoubleSide}
+        />
+        <Outlines
+          thickness={2}
+          color="#0d0905"
+          screenspace
+          opacity={1}
+          transparent
+          angle={Math.PI}
         />
       </mesh>
     </group>
