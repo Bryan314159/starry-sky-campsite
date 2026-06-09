@@ -127,9 +127,7 @@ export default function SignpostBird() {
           side={THREE.DoubleSide}
         />
         <Outlines
-          thickness={2}
-          color="#0d0905"
-          screenspace
+          thickness={0.08}
           opacity={1}
           transparent
           angle={Math.PI}
@@ -146,9 +144,7 @@ export default function SignpostBird() {
           opacity={0.65}
         />
         <Outlines
-          thickness={2}
-          color="#0d0905"
-          screenspace
+          thickness={0.08}
           opacity={1}
           transparent
           angle={Math.PI}
@@ -168,9 +164,7 @@ export default function SignpostBird() {
           side={THREE.DoubleSide}
         />
         <Outlines
-          thickness={2}
-          color="#0d0905"
-          screenspace
+          thickness={0.08}
           opacity={1}
           transparent
           angle={Math.PI}

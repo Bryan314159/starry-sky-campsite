@@ -21,9 +21,9 @@ import SkyBirds from '../components/SkyBirds';
  *   3D 浮层：Path / Campfire / Signpost / Fireflies / SkyBirds
  *
  * Lighting 调整（图片是"画"，灯光是"画框"）：
- *   - ambientLight: 0.5 → 0.4（弱化）
- *   - directionalLight: 1.3 → 0.7（避免 3D 浮层过亮抢戏）
- *   - hemisphereLight: 0.4 → 0.2
+ *   - ambientLight: 0.5 → 0.4 → 0.6（任务 2.25 提亮：toon 暗面纯黑）
+ *   - directionalLight: 1.3 → 0.7 → 1.1（任务 2.25 提亮）
+ *   - hemisphereLight: 0.4 → 0.2 → 0.4（任务 2.25 提亮）
  *   - pointLight (营火): 2.2 (保留) —— 3D 营火发热需保留
  */
 export default function Campsite() {
@@ -38,13 +38,16 @@ export default function Campsite() {
       <BackgroundImage />
       <SkyBirds />
 
-      <ambientLight intensity={0.4} color="#fff5e0" />
+      {/* Task 2.25 提亮：toon 材质在弱光下板背面纯黑
+         ambient 0.4→0.85, directional 0.7→1.3, hemisphere 0.2→0.55
+         2.25 迭代：再提亮，确保 toon gradientMap 暗面不再纯黑 */}
+      <ambientLight intensity={0.85} color="#fff5e0" />
       <directionalLight
         position={[5, 7, 3]}
-        intensity={0.7}
+        intensity={1.3}
         color="#ffe0b0"
       />
-      <hemisphereLight args={['#f5c8a0', '#5e7a45', 0.2]} />
+      <hemisphereLight args={['#f5c8a0', '#5e7a45', 0.55]} />
 
       <Path />
       <Campfire />

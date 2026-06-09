@@ -5,6 +5,7 @@ import { useBackgroundImage } from '../hooks/useBackgroundImage';
  * Scene 1 full-screen background image.
  *
  * Task 2.22 — BackgroundImage (ADR-004 方案 C 落地)
+ * Task 2.25 — 视觉回归：plane 推远到 z=-15（让 3D 浮层有"坐在图上"的中景空间）
  *
  * Replaces the previous pure-3D environment composition:
  *   - SkyDome (day)  → DELETED
@@ -22,13 +23,15 @@ import { useBackgroundImage } from '../hooks/useBackgroundImage';
  * If the image fails to load (SP1.1.1), we render a flat warm color
  * matching art-style.md §4.3 scene-1 palette as graceful degradation.
  *
- * Geometry: 32 × 18 PlaneGeometry at z = -10. With camera at
+ * Geometry: 64 × 36 PlaneGeometry at z = -15. With camera at
  * (0, 1.5, 5.0) and FOV 60 (vertical), this covers the viewport at 16:9
- * with ~4% overhang for safe-area margin.
+ * with generous safe-area margin. Larger than strictly needed (z=-15 is
+ * 20m from camera) so the image stays in the far background and 3D
+ * overlays "sit" on it at middle distance (z=0~2).
  */
-const PLANE_W = 32;
-const PLANE_H = 18;
-const PLANE_Z = -10;
+const PLANE_W = 64;
+const PLANE_H = 36;
+const PLANE_Z = -15;
 const PLANE_Y = 0.5; // slight upward offset to center horizon at 1/3
 const FALLBACK_COLOR = '#d4b896'; // warm dusk color from art-style.md §4.3
 

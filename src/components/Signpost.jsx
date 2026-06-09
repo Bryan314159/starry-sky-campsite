@@ -60,7 +60,9 @@ function createWoodGrainTexture() {
   canvas.height = h;
   const ctx = canvas.getContext('2d');
 
-  ctx.fillStyle = '#a0724a';
+  // Task 2.25: 提亮底色 #a0724a→#c89868 — 配合 meshToonMaterial color
+  // 叠加，让木质纹理在 toon 暗面也保持"温暖木色"而非"泥地深色"
+  ctx.fillStyle = '#c89868';
   ctx.fillRect(0, 0, w, h);
 
   // Vertical grain streaks
@@ -110,14 +112,13 @@ function SignpostPole() {
   const woodMap = useMemo(() => createWoodGrainTexture(), []);
   return (
     <>
-      {/* Main pole */}
+      {/* Main pole — Task 2.25: lighter wood color (#b58560→#d4a878) so
+          toon dark side stays warm rather than muddy */}
       <mesh position={[0, 0, 0]} castShadow raycast={() => null}>
         <cylinderGeometry args={[0.12, 0.16, 3.7, 10]} />
-        <meshToonMaterial map={woodMap} gradientMap={TOON_GRADIENT_MAP} color="#b58560" />
+        <meshToonMaterial map={woodMap} gradientMap={TOON_GRADIENT_MAP} color="#d4a878" />
         <Outlines
-          thickness={4}
-          color="#2a1f15"
-          screenspace
+          thickness={0.08}
           opacity={1}
           transparent={false}
           angle={Math.PI}
@@ -127,11 +128,9 @@ function SignpostPole() {
       {/* Small base flare for stability — hand-drawn "stake" feel */}
       <mesh position={[0, -1.78, 0]} castShadow raycast={() => null}>
         <cylinderGeometry args={[0.18, 0.22, 0.18, 10]} />
-        <meshToonMaterial color="#7a553a" gradientMap={TOON_GRADIENT_MAP} />
+        <meshToonMaterial color="#a47248" gradientMap={TOON_GRADIENT_MAP} />
         <Outlines
-          thickness={4}
-          color="#2a1f15"
-          screenspace
+          thickness={0.08}
           opacity={1}
           transparent={false}
           angle={Math.PI}
@@ -141,11 +140,9 @@ function SignpostPole() {
       {/* Cap on top — little wooden knob (replaced by bird) */}
       <mesh position={[0, 1.9, 0]} castShadow raycast={() => null}>
         <sphereGeometry args={[0.16, 12, 10]} />
-        <meshToonMaterial color="#8b6238" gradientMap={TOON_GRADIENT_MAP} />
+        <meshToonMaterial color="#b58560" gradientMap={TOON_GRADIENT_MAP} />
         <Outlines
-          thickness={4}
-          color="#2a1f15"
-          screenspace
+          thickness={0.08}
           opacity={1}
           transparent={false}
           angle={Math.PI}
@@ -169,14 +166,17 @@ export default function Signpost({ folders, onSelectFolder }) {
   // Source of truth: src/config/scene1Calibration.js → signpost.groupPosition
   // Signpost sits at the right ~70% of the image, where the background
   // is clean grass with no conflicting detail.
+  // Task 2.25: scale down + push back so 3D overlay doesn't dominate
+  // the static image.
   const GROUP_POS = SCENE1_CALIBRATION.signpost.groupPosition;
+  const GROUP_SCALE = SCENE1_CALIBRATION.signpost.scale;
 
   if (!folders || folders.length === 0) {
     const empty = emptyMessages.map((msg, i) => ({ id: `empty-${i}`, name: msg }));
     const laid = layoutTwoColumns(empty);
 
     return (
-      <group position={GROUP_POS}>
+      <group position={GROUP_POS} scale={GROUP_SCALE}>
         <SignpostPole />
         {laid.map((item) => (
           <SignBoard
@@ -193,7 +193,7 @@ export default function Signpost({ folders, onSelectFolder }) {
   const laid = layoutTwoColumns(folders);
 
   return (
-    <group position={GROUP_POS}>
+    <group position={GROUP_POS} scale={GROUP_SCALE}>
       <SignpostPole />
       {laid.map((item) => (
         <SignBoard

@@ -175,9 +175,7 @@ export default function SignBoard({ folder, position, onClick }) {
       <planeGeometry args={[1.2, 0.28]} />
       <meshToonMaterial map={texture} gradientMap={TOON_GRADIENT_MAP} side={THREE.DoubleSide} />
       <Outlines
-        thickness={4}
-        color="#2a1f15"
-        screenspace
+        thickness={0.08}
         opacity={1}
         transparent={false}
         angle={Math.PI}

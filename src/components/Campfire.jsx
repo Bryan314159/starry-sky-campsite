@@ -31,9 +31,7 @@ function FlameCluster() {
         <coneGeometry args={[0.22, 0.55, 8]} />
         <meshToonMaterial color="#d96b2c" gradientMap={TOON_GRADIENT_MAP} />
         <Outlines
-          thickness={3}
-          color="#3b1810"
-          screenspace
+          thickness={0.08}
           opacity={1}
           transparent={false}
           angle={Math.PI}
@@ -44,9 +42,7 @@ function FlameCluster() {
         <coneGeometry args={[0.16, 0.42, 8]} />
         <meshToonMaterial color="#e88a3c" gradientMap={TOON_GRADIENT_MAP} />
         <Outlines
-          thickness={3}
-          color="#3b1810"
-          screenspace
+          thickness={0.08}
           opacity={1}
           transparent={false}
           angle={Math.PI}
@@ -57,9 +53,7 @@ function FlameCluster() {
         <coneGeometry args={[0.10, 0.32, 8]} />
         <meshToonMaterial color="#f5d27a" gradientMap={TOON_GRADIENT_MAP} />
         <Outlines
-          thickness={3}
-          color="#3b1810"
-          screenspace
+          thickness={0.08}
           opacity={1}
           transparent={false}
           angle={Math.PI}
@@ -70,9 +64,7 @@ function FlameCluster() {
         <coneGeometry args={[0.05, 0.18, 8]} />
         <meshToonMaterial color="#fbeec1" gradientMap={TOON_GRADIENT_MAP} />
         <Outlines
-          thickness={3}
-          color="#3b1810"
-          screenspace
+          thickness={0.08}
           opacity={1}
           transparent={false}
           angle={Math.PI}
@@ -122,11 +114,10 @@ function StoneRing() {
           scale={[s.sx, s.sy, s.sx * 0.9]}
         >
           <dodecahedronGeometry args={[1, 0]} />
-          <meshToonMaterial color={new THREE.Color('#9a8e7a').multiplyScalar(s.shade)} gradientMap={TOON_GRADIENT_MAP} />
+          {/* Task 2.25: 提亮石头基色 #9a8e7a→#b8aa90 让 toon 暗面保留灰白感 */}
+          <meshToonMaterial color={new THREE.Color('#b8aa90').multiplyScalar(s.shade)} gradientMap={TOON_GRADIENT_MAP} />
           <Outlines
-            thickness={3}
-            color="#1f1a14"
-            screenspace
+            thickness={0.08}
             opacity={1}
             transparent={false}
             angle={Math.PI}
@@ -143,11 +134,10 @@ function Logs() {
     <group position={[0, 0.06, 0]} raycast={() => null}>
       <mesh rotation={[0, 0.4, Math.PI / 2]} position={[0, 0, 0]}>
         <cylinderGeometry args={[0.04, 0.05, 0.5, 8]} />
-        <meshToonMaterial color="#5b3a1f" gradientMap={TOON_GRADIENT_MAP} />
+        {/* Task 2.25: 提亮木炭 #5b3a1f→#8b6238 让 toon 暗面保留炭色 */}
+        <meshToonMaterial color="#8b6238" gradientMap={TOON_GRADIENT_MAP} />
         <Outlines
-          thickness={3}
-          color="#1a0f08"
-          screenspace
+          thickness={0.08}
           opacity={1}
           transparent={false}
           angle={Math.PI}
@@ -155,11 +145,10 @@ function Logs() {
       </mesh>
       <mesh rotation={[0, -0.6, Math.PI / 2]} position={[0.02, 0.04, 0]}>
         <cylinderGeometry args={[0.04, 0.05, 0.45, 8]} />
-        <meshToonMaterial color="#4a2f1a" gradientMap={TOON_GRADIENT_MAP} />
+        {/* Task 2.25: 提亮木炭 #4a2f1a→#7a4f30 */}
+        <meshToonMaterial color="#7a4f30" gradientMap={TOON_GRADIENT_MAP} />
         <Outlines
-          thickness={3}
-          color="#1a0f08"
-          screenspace
+          thickness={0.08}
           opacity={1}
           transparent={false}
           angle={Math.PI}
@@ -174,8 +163,13 @@ export default function Campfire() {
   // Source of truth: src/config/scene1Calibration.js → campfire.groupPosition
   // Campfire sits at the left ~19% of the image, aligned with the red
   // campfire scorch mark visible in the reference photo.
+  // Task 2.25: scale down + push back so 3D overlay doesn't dominate
+  // the static image.
   return (
-    <group position={SCENE1_CALIBRATION.campfire.groupPosition}>
+    <group
+      position={SCENE1_CALIBRATION.campfire.groupPosition}
+      scale={SCENE1_CALIBRATION.campfire.scale}
+    >
       <StoneRing />
       <Logs />
       <FlameCluster />

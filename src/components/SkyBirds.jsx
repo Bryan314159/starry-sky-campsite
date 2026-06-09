@@ -104,9 +104,7 @@ export default function SkyBirds() {
             opacity={0.55}
           />
           <Outlines
-            thickness={2}
-            color="#0d0905"
-            screenspace
+            thickness={0.08}
             opacity={1}
             transparent
             angle={Math.PI}

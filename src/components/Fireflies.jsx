@@ -127,7 +127,8 @@ export default function Fireflies() {
       if (haloRefs.current[i]) {
         haloRefs.current[i].position.set(x, y, z);
         const flicker = 0.5 + 0.5 * Math.sin(t * p.flickerSpeed + p.flickerPhase);
-        const s = p.size * (2.4 + flicker * 0.8);
+        // Task 2.25: 缩小 halo 半径 2.4→1.6 避免近距大光斑
+        const s = p.size * (1.6 + flicker * 0.6);
         haloRefs.current[i].scale.set(s, s, s);
         haloRefs.current[i].material.opacity = 0.25 + flicker * 0.45;
       }
@@ -152,11 +153,11 @@ export default function Fireflies() {
               depthWrite={false}
             />
           </mesh>
-          {/* Soft halo sprite */}
+          {/* Soft halo sprite — Task 2.25: 缩小到 2x 避免近距大光斑 */}
           <sprite
             ref={(el) => (haloRefs.current[i] = el)}
             position={p.base.toArray()}
-            scale={[p.size * 3, p.size * 3, p.size * 3]}
+            scale={[p.size * 2, p.size * 2, p.size * 2]}
             raycast={() => null}
           >
             <spriteMaterial

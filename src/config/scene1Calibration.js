@@ -23,37 +23,44 @@
  */
 export const SCENE1_CALIBRATION = {
   // 背景图平面（与 BackgroundImage.jsx 同步）
+  // Task 2.25 — 推远到 z=-15 (从 5m 到 20m)，让 3D 浮层有中景空间
+  // plane 大小 64×36，远大于 FOV 覆盖范围（FOV 60° / 20m 距离 ≈ 23m×41m 视野）
+  // 留 1.5× 安全余量，避免边缘拉伸
   background: {
-    width: 32,
-    height: 18,
-    z: -10,
+    width: 64,
+    height: 36,
+    z: -15,
     y: 0.5,
   },
 
   // 路牌柱 —— 画面右侧 ~70% 宽位置（图像右半干净草地，无视觉冲突）
+  // Task 2.25: 推远到 z=-2（5m → 7m），scale 0.7（让 3D 浮层"小一些"）
   // 柱高 3.7m，柱底 y=0（地面），柱顶 y=3.7；GROUP 在 y=1.78 居中
   signpost: {
-    groupPosition: [1.4, 1.78, 0.0],
-    poleHeight: 3.7,
+    groupPosition: [2.0, 1.3, -2.0],
+    poleHeight: 2.6,           // 3.7 × 0.7
     poleYOffset: 0,
+    scale: 0.7,                // 全组缩放（含 SignpostBird / SignBoard）
   },
 
   // 营火 —— 画面左前 ~19% 宽位置（与图像中红色营火痕迹对齐）
-  // z=1.0 距相机 4m，在地面略上，3D 营火发热光晕染附近草地
+  // Task 2.25: 推远到 z=0.5（5m → 4.5m），scale 0.55
   campfire: {
-    groupPosition: [-1.8, 0, 1.0],
+    groupPosition: [-2.4, 0, 0.5],
     flameYOffset: 0.18,
-    pointLightDistance: 4.0,
+    pointLightDistance: 3.5,
+    scale: 0.55,
   },
 
   // 小路 —— 跟随图像中可见的泥土小径
   // 起点底部中央偏左（~37% 宽），中段左偏，终点中央地平线
   // 半宽略小于图上小径（避免 3D 路径"压"在图上小径上）
+  // Task 2.25: 起点推远到 z=1.5（远离相机避免近裁切），startHalfWidth 收窄到 0.5
   path: {
-    startHalfWidth: 0.9,
-    endHalfWidth: 0.15,
-    startZ: 3.5,
-    length: 14,
+    startHalfWidth: 0.5,
+    endHalfWidth: 0.08,
+    startZ: 1.5,
+    length: 10,
     segments: 18,
     // 中心线轻微左偏再回正：t=0 → 0, t=0.5 → -0.4 (左), t=1 → +0.2
     centerlineOffset: (t) => -0.4 * Math.sin(t * Math.PI) + 0.2 * t,
@@ -61,9 +68,10 @@ export const SCENE1_CALIBRATION = {
 
   // 萤火虫 —— 集中在画面上半部（与图像中暖色雾带呼应）
   // 14 颗，xz 范围比之前略收（避免飘到画面边缘外）
+  // Task 2.25: zRange 推到 [-5, -2]（远离相机避免近大远小失控）
   fireflies: {
     count: 14,
-    range: { x: [-3.5, 3.5], y: [0.6, 2.8], z: [-3, 1.5] },
+    range: { x: [-3.5, 3.5], y: [0.6, 2.8], z: [-5, -2] },
     seed: 1729,
   },
 

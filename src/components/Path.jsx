@@ -153,9 +153,7 @@ export default function Path({ onClick }) {
       >
         <meshToonMaterial map={dirtMap} color="#c4a46c" gradientMap={TOON_GRADIENT_MAP} />
         <Outlines
-          thickness={3}
-          color="#5c4530"
-          screenspace
+          thickness={0.08}
           opacity={1}
           transparent={false}
           angle={Math.PI}
